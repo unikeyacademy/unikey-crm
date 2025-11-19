@@ -804,6 +804,7 @@ export type Database = {
           created_at: string
           current_school: string | null
           current_stage: string | null
+          curriculum: string | null
           date_of_birth: string | null
           email: string | null
           first_name: string
@@ -833,6 +834,7 @@ export type Database = {
           created_at?: string
           current_school?: string | null
           current_stage?: string | null
+          curriculum?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name: string
@@ -862,6 +864,7 @@ export type Database = {
           created_at?: string
           current_school?: string | null
           current_stage?: string | null
+          curriculum?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name?: string
