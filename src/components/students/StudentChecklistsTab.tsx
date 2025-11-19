@@ -4,10 +4,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import AddChecklistDialog from "@/components/checklists/AddChecklistDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChecklistItem {
   id: string;
@@ -33,6 +43,8 @@ const StudentChecklistsTab = ({ studentId }: StudentChecklistsTabProps) => {
   const [checklists, setChecklists] = useState<Checklist[]>([]);
   const [loading, setLoading] = useState(true);
   const [newItemName, setNewItemName] = useState<Record<string, string>>({});
+  const [convertingItem, setConvertingItem] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ChecklistItem | null>(null);
   const { toast } = useToast();
 
   const fetchChecklists = async () => {
@@ -132,6 +144,41 @@ const StudentChecklistsTab = ({ studentId }: StudentChecklistsTabProps) => {
     return <Badge className={colors[priority]}>{priority}</Badge>;
   };
 
+  const handleConvertToTask = async () => {
+    if (!selectedItem) return;
+
+    setConvertingItem(selectedItem.id);
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .insert({
+          student_id: studentId,
+          title: selectedItem.item_name,
+          description: selectedItem.description,
+          priority: selectedItem.priority || "medium",
+          due_date: selectedItem.due_date,
+          status: "pending",
+          task_type: "application"
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Converted to task",
+        description: "Checklist item converted to task successfully",
+      });
+      setSelectedItem(null);
+    } catch (error: any) {
+      toast({
+        title: "Error converting to task",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setConvertingItem(null);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -175,7 +222,7 @@ const StudentChecklistsTab = ({ studentId }: StudentChecklistsTabProps) => {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {checklist.items.map((item) => (
+                   {checklist.items.map((item) => (
                     <div key={item.id} className="flex items-start gap-3">
                       <Checkbox
                         checked={item.is_completed}
@@ -193,6 +240,15 @@ const StudentChecklistsTab = ({ studentId }: StudentChecklistsTabProps) => {
                           <p className="text-sm text-muted-foreground">{item.description}</p>
                         )}
                       </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedItem(item)}
+                        disabled={convertingItem === item.id}
+                      >
+                        <ArrowRight className="h-4 w-4 mr-1" />
+                        Convert to Task
+                      </Button>
                     </div>
                   ))}
 
@@ -223,6 +279,24 @@ const StudentChecklistsTab = ({ studentId }: StudentChecklistsTabProps) => {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Convert to Task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create a new task from the checklist item "{selectedItem?.item_name}". 
+              The checklist item will remain in the checklist.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConvertToTask}>
+              Convert to Task
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
