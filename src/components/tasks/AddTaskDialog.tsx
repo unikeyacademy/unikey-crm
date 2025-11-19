@@ -123,7 +123,6 @@ const AddTaskDialog = ({ studentId, onTaskAdded, trigger }: AddTaskDialogProps) 
                 <SelectValue placeholder="Select student" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No specific student</SelectItem>
                 {students.map((student) => (
                   <SelectItem key={student.id} value={student.id}>
                     {student.first_name} {student.last_name} ({student.student_id})

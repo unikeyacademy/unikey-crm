@@ -122,7 +122,6 @@ const AddChecklistDialog = ({ studentId, onChecklistAdded }: AddChecklistDialogP
                 <SelectValue placeholder="Select university" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
                 {universities.map((uni) => (
                   <SelectItem key={uni.id} value={uni.id}>
                     {uni.university_name}
