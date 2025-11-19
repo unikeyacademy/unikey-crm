@@ -819,6 +819,7 @@ export type Database = {
           parent_phone: string | null
           phone: string | null
           preferred_name: string | null
+          quotation: string | null
           region_interest: string[] | null
           stage_history: Json | null
           status: string | null
@@ -850,6 +851,7 @@ export type Database = {
           parent_phone?: string | null
           phone?: string | null
           preferred_name?: string | null
+          quotation?: string | null
           region_interest?: string[] | null
           stage_history?: Json | null
           status?: string | null
@@ -881,6 +883,7 @@ export type Database = {
           parent_phone?: string | null
           phone?: string | null
           preferred_name?: string | null
+          quotation?: string | null
           region_interest?: string[] | null
           stage_history?: Json | null
           status?: string | null
