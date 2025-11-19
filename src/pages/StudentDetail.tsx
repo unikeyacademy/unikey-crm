@@ -12,6 +12,8 @@ import StudentConsultationsTab from "@/components/students/StudentConsultationsT
 import StudentTasksTab from "@/components/students/StudentTasksTab";
 import StudentECAsTab from "@/components/students/StudentECAsTab";
 import StudentUniversitiesTab from "@/components/students/StudentUniversitiesTab";
+import StudentDocumentsTab from "@/components/students/StudentDocumentsTab";
+import StudentChecklistsTab from "@/components/students/StudentChecklistsTab";
 
 interface Student {
   id: string;
@@ -180,13 +182,15 @@ const StudentDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="consultations">Consultations</TabsTrigger>
-          <TabsTrigger value="tasks">Tasks</TabsTrigger>
-          <TabsTrigger value="ecas">ECAs</TabsTrigger>
-          <TabsTrigger value="universities">Universities</TabsTrigger>
-        </TabsList>
+              <TabsList className="grid w-full grid-cols-7">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="consultations">Consultations</TabsTrigger>
+                <TabsTrigger value="tasks">Tasks</TabsTrigger>
+                <TabsTrigger value="ecas">ECAs</TabsTrigger>
+                <TabsTrigger value="universities">Universities</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
+                <TabsTrigger value="checklists">Checklists</TabsTrigger>
+              </TabsList>
 
         <TabsContent value="profile">
           <StudentProfileTab student={student} onUpdate={fetchStudent} />
@@ -206,6 +210,14 @@ const StudentDetail = () => {
 
         <TabsContent value="universities">
           <StudentUniversitiesTab studentId={student.id} />
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <StudentDocumentsTab studentId={student.id} />
+        </TabsContent>
+
+        <TabsContent value="checklists">
+          <StudentChecklistsTab studentId={student.id} />
         </TabsContent>
       </Tabs>
     </div>
