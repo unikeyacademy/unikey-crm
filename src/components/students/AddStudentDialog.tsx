@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 interface AddStudentDialogProps {
   onStudentAdded?: () => void;
@@ -16,6 +17,8 @@ interface AddStudentDialogProps {
 const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [subjects, setSubjects] = useState<string[]>([]);
+  const [newSubject, setNewSubject] = useState("");
   const [formData, setFormData] = useState({
     student_id: "",
     first_name: "",
@@ -37,6 +40,20 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     notes: "",
   });
 
+  const handleAddSubject = () => {
+    const trimmedSubject = newSubject.trim();
+    if (trimmedSubject && !subjects.includes(trimmedSubject)) {
+      setSubjects([...subjects, trimmedSubject]);
+      setNewSubject("");
+    } else if (subjects.includes(trimmedSubject)) {
+      toast.error("This subject is already added");
+    }
+  };
+
+  const handleRemoveSubject = (index: number) => {
+    setSubjects(subjects.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -55,6 +72,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           grade_level: formData.grade_level ? parseInt(formData.grade_level) : null,
           current_school: formData.current_school || null,
           curriculum: formData.curriculum || null,
+          subject_choices: subjects.length > 0 ? subjects : null,
           application_cycle: formData.application_cycle || null,
           ib_predicted_grade: formData.ib_predicted_grade ? parseInt(formData.ib_predicted_grade) : null,
           current_stage: formData.current_stage,
@@ -70,6 +88,8 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
 
       toast.success("Student added successfully!");
       setOpen(false);
+      setSubjects([]);
+      setNewSubject("");
       setFormData({
         student_id: "",
         first_name: "",
@@ -257,6 +277,45 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                   onChange={(e) => setFormData({ ...formData, ib_predicted_grade: e.target.value })}
                 />
               </div>
+            </div>
+
+            {/* Subject Choices */}
+            <div className="space-y-3">
+              <Label>Subject Choices</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter a subject (e.g., Mathematics HL)"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSubject();
+                    }
+                  }}
+                />
+                <Button type="button" onClick={handleAddSubject} variant="outline" size="icon">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {subjects.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {subjects.map((subject, index) => (
+                    <Badge key={index} variant="secondary" className="pr-1">
+                      {subject}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4 ml-2 hover:bg-transparent"
+                        onClick={() => handleRemoveSubject(index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

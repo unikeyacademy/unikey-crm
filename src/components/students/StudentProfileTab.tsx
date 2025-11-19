@@ -52,6 +52,14 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
               <p className="font-medium">{student.curriculum || "-"}</p>
             </div>
             <div>
+              <p className="text-sm text-muted-foreground">Subject Choices</p>
+              <p className="font-medium">
+                {student.subject_choices && student.subject_choices.length > 0
+                  ? student.subject_choices.join(", ")
+                  : "-"}
+              </p>
+            </div>
+            <div>
               <p className="text-sm text-muted-foreground">IB Predicted Grade</p>
               <p className="font-medium">{student.ib_predicted_grade ? `${student.ib_predicted_grade}/45` : "-"}</p>
             </div>
