@@ -208,7 +208,7 @@ const StudentDetail = () => {
         </TabsContent>
 
         <TabsContent value="ecas">
-          <StudentECAsTab studentId={student.id} />
+          <StudentECAsTab studentId={student.id} studentName={fullName} />
         </TabsContent>
 
         <TabsContent value="universities">

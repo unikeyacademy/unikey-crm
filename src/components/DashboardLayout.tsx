@@ -14,6 +14,7 @@ import {
   Settings as SettingsIcon,
   Zap,
   MessageSquare,
+  Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +42,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Tasks", href: "/tasks", icon: CheckSquare },
     { name: "Documents", href: "/documents", icon: FileText },
+    { name: "ECA Database", href: "/eca-database", icon: Lightbulb },
     { name: "Email Templates", href: "/email-templates", icon: Mail },
     { name: "Email Automation", href: "/email-automation", icon: Zap },
     { name: "Requests", href: "/requests", icon: MessageSquare },

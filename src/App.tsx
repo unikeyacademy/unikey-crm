@@ -13,6 +13,7 @@ import Documents from "./pages/Documents";
 import EmailTemplates from "./pages/EmailTemplates";
 import EmailAutomation from "./pages/EmailAutomation";
 import RequestsPage from "./pages/RequestsPage";
+import ECADatabase from "./pages/ECADatabase";
 import GoogleCallbackPage from "./pages/GoogleCallbackPage";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -117,6 +118,14 @@ const App = () => (
                 <DashboardLayout>
                   <RequestsPage />
                 </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/eca-database"
+            element={
+              <ProtectedRoute>
+                <ECADatabase />
               </ProtectedRoute>
             }
           />
