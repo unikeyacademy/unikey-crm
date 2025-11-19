@@ -37,7 +37,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     current_school: "",
     curriculum: "",
     application_cycle: "",
-    ib_predicted_grade: "",
+    quotation: "",
     current_stage: "Initial Consultation",
     parent_names: "",
     parent_email: "",
@@ -274,20 +274,18 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                     <SelectItem value="A-Levels">A-Levels</SelectItem>
                     <SelectItem value="AP">Advanced Placement (AP)</SelectItem>
                     <SelectItem value="IGCSE">IGCSE</SelectItem>
-                    <SelectItem value="National">National Curriculum</SelectItem>
+                    <SelectItem value="HKDSE">HKDSE</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ib_predicted_grade">IB Predicted Grade (0-45)</Label>
+                <Label htmlFor="quotation">Quotation</Label>
                 <Input
-                  id="ib_predicted_grade"
-                  type="number"
-                  min="0"
-                  max="45"
-                  value={formData.ib_predicted_grade}
-                  onChange={(e) => setFormData({ ...formData, ib_predicted_grade: e.target.value })}
+                  id="quotation"
+                  value={formData.quotation}
+                  onChange={(e) => setFormData({ ...formData, quotation: e.target.value })}
+                  placeholder="Enter quotation"
                 />
               </div>
             </div>
