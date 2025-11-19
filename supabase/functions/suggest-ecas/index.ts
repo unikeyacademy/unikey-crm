@@ -154,23 +154,27 @@ Analyze this student and suggest 3-5 ECA opportunities that would be most benefi
                   items: {
                     type: "object",
                     properties: {
-                      opportunity_name: { type: "string" },
-                      fit_score: { type: "number", minimum: 1, maximum: 10 },
-                      reasoning: { type: "string" },
+                      opportunity_name: { type: "string", description: "Exact name of the ECA opportunity" },
+                      fit_score: { type: "number", minimum: 1, maximum: 10, description: "How well this matches the student (1-10)" },
+                      reasoning: { type: "string", description: "Why this opportunity is a good fit" },
                       key_benefits: { 
                         type: "array",
-                        items: { type: "string" }
+                        items: { type: "string" },
+                        description: "List of specific benefits for this student"
                       },
                       action_items: {
                         type: "array",
-                        items: { type: "string" }
+                        items: { type: "string" },
+                        description: "Next steps the student should take"
                       }
                     },
-                    required: ["opportunity_name", "fit_score", "reasoning", "key_benefits"]
+                    required: ["opportunity_name", "fit_score", "reasoning", "key_benefits"],
+                    additionalProperties: false
                   }
                 }
               },
-              required: ["suggestions"]
+              required: ["suggestions"],
+              additionalProperties: false
             }
           }
         }],
