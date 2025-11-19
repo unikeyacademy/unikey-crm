@@ -70,6 +70,53 @@ export type Database = {
           },
         ]
       }
+      parent_communications: {
+        Row: {
+          communication_date: string
+          communication_type: string
+          consultant_id: string
+          created_at: string
+          follow_up_required: boolean | null
+          id: string
+          notes: string | null
+          student_id: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          communication_date: string
+          communication_type: string
+          consultant_id: string
+          created_at?: string
+          follow_up_required?: boolean | null
+          id?: string
+          notes?: string | null
+          student_id: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          communication_date?: string
+          communication_type?: string
+          consultant_id?: string
+          created_at?: string
+          follow_up_required?: boolean | null
+          id?: string
+          notes?: string | null
+          student_id?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_communications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -97,59 +144,201 @@ export type Database = {
         }
         Relationships: []
       }
+      student_ecas: {
+        Row: {
+          completion_percentage: number | null
+          created_at: string
+          description: string | null
+          eca_name: string
+          eca_type: string
+          end_date: string | null
+          id: string
+          lead_consultant_id: string | null
+          milestones: Json | null
+          objectives: string | null
+          outcomes: string | null
+          start_date: string | null
+          status: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          completion_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          eca_name: string
+          eca_type: string
+          end_date?: string | null
+          id?: string
+          lead_consultant_id?: string | null
+          milestones?: Json | null
+          objectives?: string | null
+          outcomes?: string | null
+          start_date?: string | null
+          status?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          completion_percentage?: number | null
+          created_at?: string
+          description?: string | null
+          eca_name?: string
+          eca_type?: string
+          end_date?: string | null
+          id?: string
+          lead_consultant_id?: string | null
+          milestones?: Json | null
+          objectives?: string | null
+          outcomes?: string | null
+          start_date?: string | null
+          status?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_ecas_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_university_targets: {
+        Row: {
+          application_system: string | null
+          country: string | null
+          created_at: string
+          deadline_date: string | null
+          id: string
+          notes: string | null
+          priority: string | null
+          program: string | null
+          status: string | null
+          student_id: string
+          university_name: string
+          updated_at: string
+        }
+        Insert: {
+          application_system?: string | null
+          country?: string | null
+          created_at?: string
+          deadline_date?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          program?: string | null
+          status?: string | null
+          student_id: string
+          university_name: string
+          updated_at?: string
+        }
+        Update: {
+          application_system?: string | null
+          country?: string | null
+          created_at?: string
+          deadline_date?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          program?: string | null
+          status?: string | null
+          student_id?: string
+          university_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_university_targets_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
+          academic_interests: string[] | null
           application_cycle: string | null
           assigned_consultant_id: string | null
+          contract_signed_date: string | null
           created_at: string
           current_school: string | null
+          current_stage: string | null
           date_of_birth: string | null
           email: string | null
           first_name: string
+          gender: string | null
           grade_level: number | null
+          ib_predicted_grade: number | null
           id: string
           last_name: string
           notes: string | null
+          parent_email: string | null
+          parent_names: string | null
+          parent_phone: string | null
           phone: string | null
           preferred_name: string | null
+          region_interest: string[] | null
           status: string | null
           student_id: string
           tags: string[] | null
           updated_at: string
         }
         Insert: {
+          academic_interests?: string[] | null
           application_cycle?: string | null
           assigned_consultant_id?: string | null
+          contract_signed_date?: string | null
           created_at?: string
           current_school?: string | null
+          current_stage?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name: string
+          gender?: string | null
           grade_level?: number | null
+          ib_predicted_grade?: number | null
           id?: string
           last_name: string
           notes?: string | null
+          parent_email?: string | null
+          parent_names?: string | null
+          parent_phone?: string | null
           phone?: string | null
           preferred_name?: string | null
+          region_interest?: string[] | null
           status?: string | null
           student_id: string
           tags?: string[] | null
           updated_at?: string
         }
         Update: {
+          academic_interests?: string[] | null
           application_cycle?: string | null
           assigned_consultant_id?: string | null
+          contract_signed_date?: string | null
           created_at?: string
           current_school?: string | null
+          current_stage?: string | null
           date_of_birth?: string | null
           email?: string | null
           first_name?: string
+          gender?: string | null
           grade_level?: number | null
+          ib_predicted_grade?: number | null
           id?: string
           last_name?: string
           notes?: string | null
+          parent_email?: string | null
+          parent_names?: string | null
+          parent_phone?: string | null
           phone?: string | null
           preferred_name?: string | null
+          region_interest?: string[] | null
           status?: string | null
           student_id?: string
           tags?: string[] | null

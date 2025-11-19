@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Mail, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Mail, Phone, Eye } from "lucide-react";
 import { toast } from "sonner";
+import AddStudentDialog from "@/components/students/AddStudentDialog";
 
 interface Student {
   id: string;
@@ -23,6 +25,7 @@ interface Student {
 }
 
 const Students = () => {
+  const navigate = useNavigate();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,10 +71,7 @@ const Students = () => {
             Manage your student profiles and applications
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add Student
-        </Button>
+        <AddStudentDialog onStudentAdded={fetchStudents} />
       </div>
 
       {/* Search */}
@@ -142,16 +142,33 @@ const Students = () => {
                   </p>
                 )}
                 <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="gap-2"
+                    onClick={() => navigate(`/students/${student.id}`)}
+                  >
+                    <Eye className="w-3 h-3" />
+                    View Profile
+                  </Button>
                   {student.email && (
-                    <Button size="sm" variant="outline" className="gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => window.location.href = `mailto:${student.email}`}
+                    >
                       <Mail className="w-3 h-3" />
-                      Email
                     </Button>
                   )}
                   {student.phone && (
-                    <Button size="sm" variant="outline" className="gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => window.location.href = `tel:${student.phone}`}
+                    >
                       <Phone className="w-3 h-3" />
-                      Call
                     </Button>
                   )}
                 </div>
