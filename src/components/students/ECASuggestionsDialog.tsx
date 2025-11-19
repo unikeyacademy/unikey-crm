@@ -48,7 +48,13 @@ export const ECASuggestionsDialog = ({
 
       setSuggestions(data.suggestions || []);
       if (data.suggestions?.length === 0) {
-        toast.info("No suitable opportunities found at this time");
+        if (data.message) {
+          toast.info(data.message);
+        } else {
+          toast.info("No suitable opportunities found at this time");
+        }
+      } else {
+        toast.success(`Found ${data.suggestions.length} recommendations`);
       }
     } catch (error: any) {
       toast.error("Failed to fetch suggestions");
