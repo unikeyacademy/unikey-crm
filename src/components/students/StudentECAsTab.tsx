@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Calendar } from "lucide-react";
 import { toast } from "sonner";
+import AddECADialog from "./AddECADialog";
 
 interface ECA {
   id: string;
@@ -62,29 +63,30 @@ const StudentECAsTab = ({ studentId }: StudentECAsTabProps) => {
     }
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading ECAs...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (ecas.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No ECAs recorded yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Extra-Curricular Activities</h3>
+        <AddECADialog studentId={studentId} onAdded={fetchECAs} />
+      </div>
+
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading ECAs...</p>
+          </CardContent>
+        </Card>
+      ) : ecas.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              No ECAs recorded yet. Click "Add ECA" to get started.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
       {ecas.map((eca) => (
         <Card key={eca.id}>
           <CardContent className="pt-6 space-y-4">
@@ -140,6 +142,8 @@ const StudentECAsTab = ({ studentId }: StudentECAsTabProps) => {
           </CardContent>
         </Card>
       ))}
+        </div>
+      )}
     </div>
   );
 };
