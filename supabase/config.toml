@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.send-email]
 verify_jwt = true
+
+[functions.process-scheduled-emails]
+verify_jwt = false
+
+[functions.create-email-schedule]
+verify_jwt = true

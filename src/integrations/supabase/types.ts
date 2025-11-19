@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_hoc_requests: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          related_task_id: string | null
+          request_type: string
+          resolution_notes: string | null
+          status: string | null
+          student_id: string | null
+          submitted_by: string
+          submitted_by_email: string | null
+          submitted_by_name: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          related_task_id?: string | null
+          request_type: string
+          resolution_notes?: string | null
+          status?: string | null
+          student_id?: string | null
+          submitted_by: string
+          submitted_by_email?: string | null
+          submitted_by_name?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          related_task_id?: string | null
+          request_type?: string
+          resolution_notes?: string | null
+          status?: string | null
+          student_id?: string | null
+          submitted_by?: string
+          submitted_by_email?: string | null
+          submitted_by_name?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_hoc_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_hoc_requests_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_hoc_requests_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_hoc_requests_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       application_checklists: {
         Row: {
           checklist_name: string
@@ -261,6 +353,53 @@ export type Database = {
           },
         ]
       }
+      email_schedules: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          send_to_parent: boolean | null
+          send_to_student: boolean | null
+          template_id: string | null
+          trigger_days_before: number | null
+          trigger_stage: string | null
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          send_to_parent?: boolean | null
+          send_to_student?: boolean | null
+          template_id?: string | null
+          trigger_days_before?: number | null
+          trigger_stage?: string | null
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          send_to_parent?: boolean | null
+          send_to_student?: boolean | null
+          template_id?: string | null
+          trigger_days_before?: number | null
+          trigger_stage?: string | null
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_schedules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           body: string
@@ -429,6 +568,64 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      scheduled_emails: {
+        Row: {
+          created_at: string | null
+          email_log_id: string | null
+          email_schedule_id: string | null
+          error_message: string | null
+          id: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string | null
+          student_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_log_id?: string | null
+          email_schedule_id?: string | null
+          error_message?: string | null
+          id?: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_log_id?: string | null
+          email_schedule_id?: string | null
+          error_message?: string | null
+          id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string | null
+          student_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_emails_email_log_id_fkey"
+            columns: ["email_log_id"]
+            isOneToOne: false
+            referencedRelation: "email_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_email_schedule_id_fkey"
+            columns: ["email_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "email_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_emails_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_documents: {
         Row: {
