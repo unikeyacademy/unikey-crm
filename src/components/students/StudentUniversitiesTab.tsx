@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Globe } from "lucide-react";
 import { toast } from "sonner";
+import AddUniversityDialog from "./AddUniversityDialog";
 
 interface UniversityTarget {
   id: string;
@@ -75,29 +76,30 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
     }
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading university targets...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (universities.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No university targets added yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">University Targets</h3>
+        <AddUniversityDialog studentId={studentId} onAdded={fetchUniversities} />
+      </div>
+
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading university targets...</p>
+          </CardContent>
+        </Card>
+      ) : universities.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              No university targets added yet. Click "Add University" to begin.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
       {universities.map((uni) => (
         <Card key={uni.id}>
           <CardContent className="pt-6 space-y-3">
@@ -147,6 +149,8 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
           </CardContent>
         </Card>
       ))}
+        </div>
+      )}
     </div>
   );
 };
