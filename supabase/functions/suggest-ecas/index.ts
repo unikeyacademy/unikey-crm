@@ -203,11 +203,46 @@ Analyze this student and suggest 3-5 ECA opportunities that would be most benefi
     }
 
     const aiData = await aiResponse.json();
-    console.log("AI response received");
+    console.log("AI response received:", JSON.stringify(aiData, null, 2));
     
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
       console.error("No tool call in AI response");
+      console.error("Full AI response:", JSON.stringify(aiData, null, 2));
+      
+      // Try to extract content directly if no tool call
+      const content = aiData.choices?.[0]?.message?.content;
+      if (content) {
+        console.log("Attempting to parse content directly:", content);
+        try {
+          const parsed = JSON.parse(content);
+          if (parsed.suggestions) {
+            console.log("Successfully parsed suggestions from content");
+            const suggestions = parsed.suggestions;
+            
+            // Enrich suggestions with full opportunity data
+            const enrichedSuggestions = suggestions.map((suggestion: any) => {
+              const opportunity = opportunities?.find(
+                (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
+              );
+              return {
+                ...suggestion,
+                opportunity: opportunity || null
+              };
+            }).filter((s: any) => s.opportunity !== null);
+
+            return new Response(
+              JSON.stringify({ suggestions: enrichedSuggestions }),
+              {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              }
+            );
+          }
+        } catch (e) {
+          console.error("Failed to parse content as JSON:", e);
+        }
+      }
+      
       return new Response(JSON.stringify({ error: "Invalid AI response format" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
