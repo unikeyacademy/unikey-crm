@@ -10,6 +10,7 @@ import {
   FileText,
   LogOut,
   GraduationCap,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,6 +38,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Tasks", href: "/tasks", icon: CheckSquare },
     { name: "Documents", href: "/documents", icon: FileText },
+    { name: "Email Templates", href: "/email-templates", icon: Mail },
   ];
 
   const isActive = (path: string) => location.pathname === path;

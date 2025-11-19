@@ -168,6 +168,102 @@ export type Database = {
           },
         ]
       }
+      email_logs: {
+        Row: {
+          body: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          recipient_email: string
+          recipient_name: string | null
+          sent_at: string
+          sent_by: string
+          status: string | null
+          student_id: string | null
+          subject: string
+          template_id: string | null
+        }
+        Insert: {
+          body: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email: string
+          recipient_name?: string | null
+          sent_at?: string
+          sent_by: string
+          status?: string | null
+          student_id?: string | null
+          subject: string
+          template_id?: string | null
+        }
+        Update: {
+          body?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email?: string
+          recipient_name?: string | null
+          sent_at?: string
+          sent_by?: string
+          status?: string | null
+          student_id?: string | null
+          subject?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          merge_fields: Json | null
+          subject: string
+          template_name: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          merge_fields?: Json | null
+          subject: string
+          template_name: string
+          template_type: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          merge_fields?: Json | null
+          subject?: string
+          template_name?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parent_communications: {
         Row: {
           communication_date: string
@@ -208,6 +304,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "parent_communications_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parent_communications_log: {
+        Row: {
+          communication_type: string
+          content: string | null
+          created_at: string
+          follow_up_date: string | null
+          follow_up_required: boolean | null
+          id: string
+          recipient: string
+          sent_at: string
+          sent_by: string
+          student_id: string
+          subject: string | null
+        }
+        Insert: {
+          communication_type: string
+          content?: string | null
+          created_at?: string
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          recipient: string
+          sent_at?: string
+          sent_by: string
+          student_id: string
+          subject?: string | null
+        }
+        Update: {
+          communication_type?: string
+          content?: string | null
+          created_at?: string
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          id?: string
+          recipient?: string
+          sent_at?: string
+          sent_by?: string
+          student_id?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_communications_log_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
