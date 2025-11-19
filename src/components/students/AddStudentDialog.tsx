@@ -15,10 +15,15 @@ interface AddStudentDialogProps {
 }
 
 const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
+  interface SubjectChoice {
+    subject: string;
+    predicted_grade: string;
+  }
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [newSubject, setNewSubject] = useState("");
+  const [subjects, setSubjects] = useState<SubjectChoice[]>([]);
+  const [newSubject, setNewSubject] = useState({ subject: "", predicted_grade: "" });
   const [formData, setFormData] = useState({
     student_id: "",
     first_name: "",
@@ -41,13 +46,21 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
   });
 
   const handleAddSubject = () => {
-    const trimmedSubject = newSubject.trim();
-    if (trimmedSubject && !subjects.includes(trimmedSubject)) {
-      setSubjects([...subjects, trimmedSubject]);
-      setNewSubject("");
-    } else if (subjects.includes(trimmedSubject)) {
-      toast.error("This subject is already added");
+    if (!newSubject.subject.trim() || !newSubject.predicted_grade.trim()) {
+      toast.error("Please fill in both subject and predicted grade");
+      return;
     }
+    
+    if (subjects.some(s => s.subject === newSubject.subject.trim())) {
+      toast.error("This subject has already been added");
+      return;
+    }
+    
+    setSubjects([...subjects, { 
+      subject: newSubject.subject.trim(), 
+      predicted_grade: newSubject.predicted_grade.trim() 
+    }]);
+    setNewSubject({ subject: "", predicted_grade: "" });
   };
 
   const handleRemoveSubject = (index: number) => {
@@ -72,7 +85,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           grade_level: formData.grade_level ? parseInt(formData.grade_level) : null,
           current_school: formData.current_school || null,
           curriculum: formData.curriculum || null,
-          subject_choices: subjects.length > 0 ? subjects : null,
+          subject_choices: subjects.length > 0 ? subjects as any : null,
           application_cycle: formData.application_cycle || null,
           ib_predicted_grade: formData.ib_predicted_grade ? parseInt(formData.ib_predicted_grade) : null,
           current_stage: formData.current_stage,
@@ -89,7 +102,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
       toast.success("Student added successfully!");
       setOpen(false);
       setSubjects([]);
-      setNewSubject("");
+      setNewSubject({ subject: "", predicted_grade: "" });
       setFormData({
         student_id: "",
         first_name: "",
@@ -279,40 +292,43 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
               </div>
             </div>
 
-            {/* Subject Choices */}
             <div className="space-y-3">
               <Label>Subject Choices</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter a subject (e.g., Mathematics HL)"
-                  value={newSubject}
-                  onChange={(e) => setNewSubject(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSubject();
-                    }
-                  }}
+                  placeholder="Subject name (e.g., Mathematics HL)"
+                  value={newSubject.subject}
+                  onChange={(e) => setNewSubject({ ...newSubject, subject: e.target.value })}
+                  className="flex-1"
+                />
+                <Input
+                  placeholder="Grade"
+                  value={newSubject.predicted_grade}
+                  onChange={(e) => setNewSubject({ ...newSubject, predicted_grade: e.target.value })}
+                  className="w-24"
                 />
                 <Button type="button" onClick={handleAddSubject} variant="outline" size="icon">
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
               {subjects.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {subjects.map((subject, index) => (
-                    <Badge key={index} variant="secondary" className="pr-1">
-                      {subject}
+                <div className="space-y-2">
+                  {subjects.map((choice, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 rounded-md bg-muted">
+                      <div className="flex items-center gap-3">
+                        <span className="font-medium">{choice.subject}</span>
+                        <Badge variant="outline">Grade: {choice.predicted_grade}</Badge>
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-4 w-4 ml-2 hover:bg-transparent"
                         onClick={() => handleRemoveSubject(index)}
+                        className="h-8 w-8"
                       >
-                        <X className="w-3 h-3" />
+                        <X className="h-4 w-4" />
                       </Button>
-                    </Badge>
+                    </div>
                   ))}
                 </div>
               )}
