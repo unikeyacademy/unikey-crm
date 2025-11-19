@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import DeadlineCascadeDialog from "./DeadlineCascadeDialog";
 
 interface AddUniversityDialogProps {
   studentId: string;
@@ -17,6 +18,8 @@ interface AddUniversityDialogProps {
 const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [cascadeOpen, setCascadeOpen] = useState(false);
+  const [addedUniversity, setAddedUniversity] = useState<any>(null);
   const [formData, setFormData] = useState({
     university_name: "",
     program: "",
@@ -33,7 +36,7 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("student_university_targets").insert([
+      const { data, error } = await supabase.from("student_university_targets").insert([
         {
           student_id: studentId,
           university_name: formData.university_name,
@@ -45,23 +48,30 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
           priority: formData.priority,
           notes: formData.notes || null,
         },
-      ]);
+      ]).select();
 
       if (error) throw error;
 
       toast.success("University target added!");
       setOpen(false);
-      setFormData({
-        university_name: "",
-        program: "",
-        country: "",
-        application_system: "",
-        deadline_date: "",
-        status: "researching",
-        priority: "medium",
-        notes: "",
-      });
-      onAdded();
+      
+      // If deadline exists, show cascade dialog
+      if (formData.deadline_date && data && data[0]) {
+        setAddedUniversity(data[0]);
+        setCascadeOpen(true);
+      } else {
+        setFormData({
+          university_name: "",
+          program: "",
+          country: "",
+          application_system: "",
+          deadline_date: "",
+          status: "researching",
+          priority: "medium",
+          notes: "",
+        });
+        onAdded();
+      }
     } catch (error: any) {
       toast.error(error.message || "Error adding university");
     } finally {
@@ -69,7 +79,24 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
     }
   };
 
+  const handleCascadeClose = () => {
+    setCascadeOpen(false);
+    setAddedUniversity(null);
+    setFormData({
+      university_name: "",
+      program: "",
+      country: "",
+      application_system: "",
+      deadline_date: "",
+      status: "researching",
+      priority: "medium",
+      notes: "",
+    });
+    onAdded();
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2">
@@ -217,6 +244,19 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
         </form>
       </DialogContent>
     </Dialog>
+    
+    {addedUniversity && (
+      <DeadlineCascadeDialog
+        open={cascadeOpen}
+        onOpenChange={handleCascadeClose}
+        universityId={addedUniversity.id}
+        universityName={addedUniversity.university_name}
+        applicationSystem={addedUniversity.application_system}
+        deadlineDate={addedUniversity.deadline_date}
+        studentId={studentId}
+      />
+    )}
+    </>
   );
 };
 

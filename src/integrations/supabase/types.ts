@@ -512,6 +512,7 @@ export type Database = {
           program: string | null
           status: string | null
           student_id: string
+          tasks_generated: boolean | null
           university_name: string
           updated_at: string
         }
@@ -526,6 +527,7 @@ export type Database = {
           program?: string | null
           status?: string | null
           student_id: string
+          tasks_generated?: boolean | null
           university_name: string
           updated_at?: string
         }
@@ -540,6 +542,7 @@ export type Database = {
           program?: string | null
           status?: string | null
           student_id?: string
+          tasks_generated?: boolean | null
           university_name?: string
           updated_at?: string
         }
@@ -577,6 +580,7 @@ export type Database = {
           phone: string | null
           preferred_name: string | null
           region_interest: string[] | null
+          stage_history: Json | null
           status: string | null
           student_id: string
           tags: string[] | null
@@ -605,6 +609,7 @@ export type Database = {
           phone?: string | null
           preferred_name?: string | null
           region_interest?: string[] | null
+          stage_history?: Json | null
           status?: string | null
           student_id: string
           tags?: string[] | null
@@ -633,12 +638,54 @@ export type Database = {
           phone?: string | null
           preferred_name?: string | null
           region_interest?: string[] | null
+          stage_history?: Json | null
           status?: string | null
           student_id?: string
           tags?: string[] | null
           updated_at?: string
         }
         Relationships: []
+      }
+      task_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          stage: string | null
+          tasks: Json
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          stage?: string | null
+          tasks?: Json
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          stage?: string | null
+          tasks?: Json
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -705,6 +752,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      university_deadline_templates: {
+        Row: {
+          application_system: string | null
+          created_at: string
+          id: string
+          milestone_tasks: Json
+          template_name: string
+        }
+        Insert: {
+          application_system?: string | null
+          created_at?: string
+          id?: string
+          milestone_tasks?: Json
+          template_name: string
+        }
+        Update: {
+          application_system?: string | null
+          created_at?: string
+          id?: string
+          milestone_tasks?: Json
+          template_name?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
