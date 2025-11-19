@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      application_checklists: {
+        Row: {
+          checklist_name: string
+          created_at: string
+          description: string | null
+          id: string
+          student_id: string
+          university_target_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          checklist_name: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          student_id: string
+          university_target_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checklist_name?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          student_id?: string
+          university_target_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_checklists_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_checklists_university_target_id_fkey"
+            columns: ["university_target_id"]
+            isOneToOne: false
+            referencedRelation: "student_university_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_items: {
+        Row: {
+          checklist_id: string
+          completed_by: string | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_completed: boolean | null
+          item_name: string
+          order_index: number | null
+          priority: string | null
+          updated_at: string
+        }
+        Insert: {
+          checklist_id: string
+          completed_by?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          item_name: string
+          order_index?: number | null
+          priority?: string | null
+          updated_at?: string
+        }
+        Update: {
+          checklist_id?: string
+          completed_by?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_completed?: boolean | null
+          item_name?: string
+          order_index?: number | null
+          priority?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "application_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultations: {
         Row: {
           action_items: string[] | null
@@ -143,6 +241,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      student_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          file_path: string
+          file_size: number | null
+          id: string
+          notes: string | null
+          student_id: string
+          updated_at: string
+          upload_date: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          student_id: string
+          updated_at?: string
+          upload_date?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          notes?: string | null
+          student_id?: string
+          updated_at?: string
+          upload_date?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_documents_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       student_ecas: {
         Row: {
