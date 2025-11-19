@@ -823,6 +823,7 @@ export type Database = {
           stage_history: Json | null
           status: string | null
           student_id: string
+          subject_choices: string[] | null
           tags: string[] | null
           updated_at: string
         }
@@ -853,6 +854,7 @@ export type Database = {
           stage_history?: Json | null
           status?: string | null
           student_id: string
+          subject_choices?: string[] | null
           tags?: string[] | null
           updated_at?: string
         }
@@ -883,6 +885,7 @@ export type Database = {
           stage_history?: Json | null
           status?: string | null
           student_id?: string
+          subject_choices?: string[] | null
           tags?: string[] | null
           updated_at?: string
         }
