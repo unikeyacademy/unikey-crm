@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User } from "lucide-react";
 import { toast } from "sonner";
+import AddTaskDialog from "@/components/tasks/AddTaskDialog";
 
 interface Task {
   id: string;
@@ -72,29 +73,30 @@ const StudentTasksTab = ({ studentId }: StudentTasksTabProps) => {
     }
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading tasks...</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (tasks.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No tasks assigned yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Student Tasks</h3>
+        <AddTaskDialog studentId={studentId} onTaskAdded={fetchTasks} />
+      </div>
+
+      {loading ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading tasks...</p>
+          </CardContent>
+        </Card>
+      ) : tasks.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              No tasks assigned yet. Click "Add Task" to create one.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
       {tasks.map((task) => (
         <Card key={task.id}>
           <CardContent className="pt-6">
@@ -129,6 +131,8 @@ const StudentTasksTab = ({ studentId }: StudentTasksTabProps) => {
           </CardContent>
         </Card>
       ))}
+        </div>
+      )}
     </div>
   );
 };
