@@ -112,6 +112,36 @@ export type Database = {
           },
         ]
       }
+      checklist_templates: {
+        Row: {
+          application_system: string
+          created_at: string
+          description: string | null
+          id: string
+          items: Json
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          application_system: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          items?: Json
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          application_system?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          items?: Json
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       consultations: {
         Row: {
           action_items: string[] | null

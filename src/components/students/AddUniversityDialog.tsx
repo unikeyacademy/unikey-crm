@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import DeadlineCascadeDialog from "./DeadlineCascadeDialog";
+import { ChecklistGenerationDialog } from "../checklists/ChecklistGenerationDialog";
 
 interface AddUniversityDialogProps {
   studentId: string;
@@ -19,6 +20,7 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cascadeOpen, setCascadeOpen] = useState(false);
+  const [checklistOpen, setChecklistOpen] = useState(false);
   const [addedUniversity, setAddedUniversity] = useState<any>(null);
   const [formData, setFormData] = useState({
     university_name: "",
@@ -55,22 +57,20 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
       toast.success("University target added!");
       setOpen(false);
       
-      // If deadline exists, show cascade dialog
-      if (formData.deadline_date && data && data[0]) {
+      // Store university data for subsequent dialogs
+      if (data && data[0]) {
         setAddedUniversity(data[0]);
-        setCascadeOpen(true);
-      } else {
-        setFormData({
-          university_name: "",
-          program: "",
-          country: "",
-          application_system: "",
-          deadline_date: "",
-          status: "researching",
-          priority: "medium",
-          notes: "",
-        });
-        onAdded();
+        
+        // First, check if we should generate a checklist
+        if (formData.application_system) {
+          setChecklistOpen(true);
+        } else if (formData.deadline_date) {
+          // If no application system but has deadline, go straight to cascade
+          setCascadeOpen(true);
+        } else {
+          // No checklist or cascade needed, just close
+          handleFinalClose();
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Error adding university");
@@ -79,8 +79,24 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
     }
   };
 
+  const handleChecklistClose = () => {
+    setChecklistOpen(false);
+    
+    // After checklist generation, check if we need to show cascade dialog
+    if (addedUniversity?.deadline_date) {
+      setCascadeOpen(true);
+    } else {
+      // No cascade needed, finish up
+      handleFinalClose();
+    }
+  };
+
   const handleCascadeClose = () => {
     setCascadeOpen(false);
+    handleFinalClose();
+  };
+
+  const handleFinalClose = () => {
     setAddedUniversity(null);
     setFormData({
       university_name: "",
@@ -245,7 +261,19 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
       </DialogContent>
     </Dialog>
     
-    {addedUniversity && (
+    {addedUniversity && checklistOpen && (
+      <ChecklistGenerationDialog
+        open={checklistOpen}
+        onOpenChange={setChecklistOpen}
+        studentId={studentId}
+        universityTargetId={addedUniversity.id}
+        universityName={addedUniversity.university_name}
+        applicationSystem={addedUniversity.application_system}
+        onGenerated={handleChecklistClose}
+      />
+    )}
+
+    {addedUniversity && cascadeOpen && (
       <DeadlineCascadeDialog
         open={cascadeOpen}
         onOpenChange={handleCascadeClose}
