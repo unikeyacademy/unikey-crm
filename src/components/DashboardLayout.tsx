@@ -11,6 +11,7 @@ import {
   LogOut,
   GraduationCap,
   Mail,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +40,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Tasks", href: "/tasks", icon: CheckSquare },
     { name: "Documents", href: "/documents", icon: FileText },
     { name: "Email Templates", href: "/email-templates", icon: Mail },
+    { name: "Settings", href: "/settings", icon: SettingsIcon },
   ];
 
   const isActive = (path: string) => location.pathname === path;

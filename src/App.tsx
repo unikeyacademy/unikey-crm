@@ -11,6 +11,8 @@ import Tasks from "./pages/Tasks";
 import CalendarPage from "./pages/CalendarPage";
 import Documents from "./pages/Documents";
 import EmailTemplates from "./pages/EmailTemplates";
+import GoogleCallbackPage from "./pages/GoogleCallbackPage";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
@@ -25,6 +27,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
           <Route
             path="/"
             element={
@@ -91,6 +94,16 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <EmailTemplates />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Settings />
                 </DashboardLayout>
               </ProtectedRoute>
             }

@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -34,6 +34,7 @@ const AddConsultationCalendarDialog = ({
 }: AddConsultationCalendarDialogProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [generatingMeet, setGeneratingMeet] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     studentId: "",
@@ -45,6 +46,59 @@ const AddConsultationCalendarDialog = ({
     notes: "",
   });
   const { toast } = useToast();
+
+  const handleGenerateMeetLink = async () => {
+    if (!formData.consultationDate || !formData.consultationTime || !formData.studentId) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in student, date and time first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingMeet(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data: student } = await supabase
+        .from('students')
+        .select('first_name, last_name')
+        .eq('id', formData.studentId)
+        .single();
+
+      const consultationDateTime = `${formData.consultationDate}T${formData.consultationTime}:00`;
+      const studentName = student ? `${student.first_name} ${student.last_name}` : 'Student';
+
+      const { data, error } = await supabase.functions.invoke('create-meet-link', {
+        body: {
+          consultationDate: consultationDateTime,
+          duration: formData.durationMinutes,
+          studentName,
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.meetLink) {
+        setFormData({ ...formData, meetingLink: data.meetLink });
+        toast({
+          title: "Google Meet link generated!",
+          description: "The link has been added to the meeting link field",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to generate Meet link",
+        description: error.message || "Make sure Google Calendar is connected in Settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingMeet(false);
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -80,17 +134,39 @@ const AddConsultationCalendarDialog = ({
 
       const consultationDateTime = `${formData.consultationDate}T${formData.consultationTime}:00`;
 
-      const { error } = await supabase.from('consultations').insert({
-        student_id: formData.studentId,
-        consultant_id: user.id,
-        consultation_type: formData.consultationType,
-        consultation_date: consultationDateTime,
-        duration_minutes: formData.durationMinutes,
-        meeting_link: formData.meetingLink || null,
-        notes: formData.notes || null,
-      });
+      const { data: insertedConsultation, error } = await supabase
+        .from('consultations')
+        .insert({
+          student_id: formData.studentId,
+          consultant_id: user.id,
+          consultation_type: formData.consultationType,
+          consultation_date: consultationDateTime,
+          duration_minutes: formData.durationMinutes,
+          meeting_link: formData.meetingLink || null,
+          notes: formData.notes || null,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Auto-sync with Google Calendar if connected
+      if (insertedConsultation) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          await supabase.functions.invoke('sync-calendar', {
+            body: {
+              consultationId: insertedConsultation.id,
+              action: 'create',
+            },
+            headers: {
+              Authorization: `Bearer ${session?.access_token}`,
+            },
+          });
+        } catch (calendarError) {
+          console.log('Calendar sync optional, skipped:', calendarError);
+        }
+      }
 
       toast({
         title: "Consultation scheduled",
@@ -213,12 +289,28 @@ const AddConsultationCalendarDialog = ({
 
           <div className="space-y-2">
             <Label htmlFor="meetingLink">Meeting Link</Label>
-            <Input
-              id="meetingLink"
-              value={formData.meetingLink}
-              onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-              placeholder="https://zoom.us/..."
-            />
+            <div className="flex gap-2">
+              <Input
+                id="meetingLink"
+                value={formData.meetingLink}
+                onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                placeholder="https://meet.google.com/..."
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleGenerateMeetLink}
+                disabled={generatingMeet || !formData.studentId || !formData.consultationDate || !formData.consultationTime}
+                title="Generate Google Meet link"
+              >
+                <Video className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Click the video icon to auto-generate a Google Meet link
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -1,1 +1,13 @@
 project_id = "qgtaqimxuqogkrkkredn"
+
+[functions.google-oauth]
+verify_jwt = true
+
+[functions.sync-calendar]
+verify_jwt = true
+
+[functions.create-meet-link]
+verify_jwt = true
+
+[functions.send-email]
+verify_jwt = true
