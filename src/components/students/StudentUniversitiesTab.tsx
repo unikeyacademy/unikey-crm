@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Globe } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Globe, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import AddUniversityDialog from "./AddUniversityDialog";
+import DeadlineCascadeDialog from "./DeadlineCascadeDialog";
 
 interface UniversityTarget {
   id: string;
@@ -16,6 +18,7 @@ interface UniversityTarget {
   status: string;
   priority: string;
   notes: string | null;
+  tasks_generated: boolean;
 }
 
 interface StudentUniversitiesTabProps {
@@ -25,6 +28,8 @@ interface StudentUniversitiesTabProps {
 const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
   const [universities, setUniversities] = useState<UniversityTarget[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cascadeUni, setCascadeUni] = useState<UniversityTarget | null>(null);
+  const [cascadeOpen, setCascadeOpen] = useState(false);
 
   useEffect(() => {
     fetchUniversities();
@@ -74,6 +79,17 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
       default:
         return "";
     }
+  };
+
+  const handleGenerateTasks = (uni: UniversityTarget) => {
+    setCascadeUni(uni);
+    setCascadeOpen(true);
+  };
+
+  const handleCascadeClose = () => {
+    setCascadeOpen(false);
+    setCascadeUni(null);
+    fetchUniversities();
   };
 
   return (
@@ -146,10 +162,52 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
                 <p className="text-sm text-muted-foreground">{uni.notes}</p>
               </div>
             )}
+
+            {uni.deadline_date && !uni.tasks_generated && (
+              <div className="pt-3 border-t mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleGenerateTasks(uni)}
+                  className="w-full gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Generate Application Timeline
+                </Button>
+              </div>
+            )}
+
+            {uni.tasks_generated && (
+              <div className="pt-3 border-t mt-3 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Tasks generated
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleGenerateTasks(uni)}
+                >
+                  Regenerate
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
         </div>
+      )}
+
+      {cascadeUni && (
+        <DeadlineCascadeDialog
+          open={cascadeOpen}
+          onOpenChange={handleCascadeClose}
+          universityId={cascadeUni.id}
+          universityName={cascadeUni.university_name}
+          applicationSystem={cascadeUni.application_system}
+          deadlineDate={cascadeUni.deadline_date!}
+          studentId={studentId}
+        />
       )}
     </div>
   );

@@ -1,14 +1,37 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import EditStageDialog from "./EditStageDialog";
 
 interface StudentProfileTabProps {
   student: any;
   onUpdate: () => void;
 }
 
-const StudentProfileTab = ({ student }: StudentProfileTabProps) => {
+const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
   return (
     <div className="space-y-6">
+      {/* Current Stage Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Current Stage</CardTitle>
+            <EditStageDialog
+              studentId={student.id}
+              studentName={`${student.first_name} ${student.last_name}`}
+              currentStage={student.current_stage || "Initial Consultation"}
+              onStageChanged={onUpdate}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+            <p className="text-lg font-semibold text-primary">
+              {student.current_stage || "Initial Consultation"}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Academic Background */}
       <Card>
         <CardHeader>
