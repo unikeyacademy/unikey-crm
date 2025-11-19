@@ -60,7 +60,23 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Found ${opportunities?.length || 0} opportunities. Calling AI...`);
+    console.log(`Found ${opportunities?.length || 0} opportunities`);
+
+    // Check if there are any opportunities available
+    if (!opportunities || opportunities.length === 0) {
+      console.log("No opportunities in database, returning empty suggestions");
+      return new Response(
+        JSON.stringify({ 
+          suggestions: [],
+          message: "No ECA opportunities available in the database yet. Please add opportunities in the ECA Database page first."
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log("Calling AI for suggestions...");
 
     // Prepare context for AI
     const studentContext = `
