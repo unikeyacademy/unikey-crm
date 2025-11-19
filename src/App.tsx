@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
+import StudentDetail from "./pages/StudentDetail";
 import Tasks from "./pages/Tasks";
 import CalendarPage from "./pages/CalendarPage";
 import Documents from "./pages/Documents";
@@ -29,6 +30,16 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Dashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/students/:id"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <StudentDetail />
                 </DashboardLayout>
               </ProtectedRoute>
             }
