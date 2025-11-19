@@ -11,6 +11,8 @@ import Tasks from "./pages/Tasks";
 import CalendarPage from "./pages/CalendarPage";
 import Documents from "./pages/Documents";
 import EmailTemplates from "./pages/EmailTemplates";
+import EmailAutomation from "./pages/EmailAutomation";
+import RequestsPage from "./pages/RequestsPage";
 import GoogleCallbackPage from "./pages/GoogleCallbackPage";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -94,6 +96,26 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <EmailTemplates />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/email-automation"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <EmailAutomation />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/requests"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <RequestsPage />
                 </DashboardLayout>
               </ProtectedRoute>
             }
