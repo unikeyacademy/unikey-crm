@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.create-email-schedule]
 verify_jwt = true
+
+[functions.suggest-ecas]
+verify_jwt = true

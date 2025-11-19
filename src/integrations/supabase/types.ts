@@ -293,6 +293,78 @@ export type Database = {
           },
         ]
       }
+      eca_opportunities: {
+        Row: {
+          best_for: string[] | null
+          cost: string | null
+          created_at: string
+          created_by: string | null
+          deadline_date: string | null
+          deadline_type: string | null
+          eligibility: string | null
+          id: string
+          internal_notes: string | null
+          is_active: boolean | null
+          is_recommended: boolean | null
+          name: string
+          past_success_notes: string | null
+          prestige_level: string | null
+          registration_fee: string | null
+          required_documents: string[] | null
+          subject_areas: string[]
+          time_commitment: string | null
+          type: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          best_for?: string[] | null
+          cost?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_date?: string | null
+          deadline_type?: string | null
+          eligibility?: string | null
+          id?: string
+          internal_notes?: string | null
+          is_active?: boolean | null
+          is_recommended?: boolean | null
+          name: string
+          past_success_notes?: string | null
+          prestige_level?: string | null
+          registration_fee?: string | null
+          required_documents?: string[] | null
+          subject_areas?: string[]
+          time_commitment?: string | null
+          type: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          best_for?: string[] | null
+          cost?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_date?: string | null
+          deadline_type?: string | null
+          eligibility?: string | null
+          id?: string
+          internal_notes?: string | null
+          is_active?: boolean | null
+          is_recommended?: boolean | null
+          name?: string
+          past_success_notes?: string | null
+          prestige_level?: string | null
+          registration_fee?: string | null
+          required_documents?: string[] | null
+          subject_areas?: string[]
+          time_commitment?: string | null
+          type?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       email_logs: {
         Row: {
           body: string

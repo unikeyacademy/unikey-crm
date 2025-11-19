@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Calendar } from "lucide-react";
+import { Calendar, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import AddECADialog from "./AddECADialog";
+import { ECASuggestionsDialog } from "./ECASuggestionsDialog";
 
 interface ECA {
   id: string;
@@ -22,11 +24,13 @@ interface ECA {
 
 interface StudentECAsTabProps {
   studentId: string;
+  studentName: string;
 }
 
-const StudentECAsTab = ({ studentId }: StudentECAsTabProps) => {
+const StudentECAsTab = ({ studentId, studentName }: StudentECAsTabProps) => {
   const [ecas, setEcas] = useState<ECA[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     fetchECAs();
@@ -67,7 +71,20 @@ const StudentECAsTab = ({ studentId }: StudentECAsTabProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Extra-Curricular Activities</h3>
-        <AddECADialog studentId={studentId} onAdded={fetchECAs} />
+        <div className="flex gap-2">
+          <ECASuggestionsDialog
+            studentId={studentId}
+            studentName={studentName}
+            open={showSuggestions}
+            onOpenChange={setShowSuggestions}
+            onECAAdded={fetchECAs}
+          />
+          <Button variant="outline" onClick={() => setShowSuggestions(true)}>
+            <Lightbulb className="mr-2 h-4 w-4" />
+            Get Suggestions
+          </Button>
+          <AddECADialog studentId={studentId} onAdded={fetchECAs} />
+        </div>
       </div>
 
       {loading ? (
