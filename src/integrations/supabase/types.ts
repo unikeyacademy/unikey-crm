@@ -150,6 +150,7 @@ export type Database = {
           consultation_type: string
           created_at: string
           duration_minutes: number | null
+          google_calendar_event_id: string | null
           id: string
           meeting_link: string | null
           next_steps: string | null
@@ -165,6 +166,7 @@ export type Database = {
           consultation_type: string
           created_at?: string
           duration_minutes?: number | null
+          google_calendar_event_id?: string | null
           id?: string
           meeting_link?: string | null
           next_steps?: string | null
@@ -180,6 +182,7 @@ export type Database = {
           consultation_type?: string
           created_at?: string
           duration_minutes?: number | null
+          google_calendar_event_id?: string | null
           id?: string
           meeting_link?: string | null
           next_steps?: string | null
@@ -396,6 +399,9 @@ export type Database = {
           created_at: string
           email: string
           full_name: string | null
+          google_access_token: string | null
+          google_refresh_token: string | null
+          google_token_expires_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
@@ -404,6 +410,9 @@ export type Database = {
           created_at?: string
           email: string
           full_name?: string | null
+          google_access_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
           id: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
@@ -412,6 +421,9 @@ export type Database = {
           created_at?: string
           email?: string
           full_name?: string | null
+          google_access_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
