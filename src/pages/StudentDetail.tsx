@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Phone, Calendar, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import SendEmailDialog from "@/components/email/SendEmailDialog";
 import StudentProfileTab from "@/components/students/StudentProfileTab";
 import StudentConsultationsTab from "@/components/students/StudentConsultationsTab";
 import StudentTasksTab from "@/components/students/StudentTasksTab";
@@ -154,16 +155,18 @@ const StudentDetail = () => {
 
           {/* Contact Information */}
           <div className="flex gap-2 mt-4 pt-4 border-t">
-            {student.email && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => window.location.href = `mailto:${student.email}`}
-              >
-                <Mail className="w-4 h-4" />
-                {student.email}
-              </Button>
+            {(student.parent_email || student.email) && (
+              <SendEmailDialog
+                studentId={student.id}
+                defaultTo={student.parent_email || student.email || ""}
+                defaultToName={student.parent_names || `${student.first_name} ${student.last_name}`}
+                trigger={
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Mail className="w-4 h-4" />
+                    Send Email
+                  </Button>
+                }
+              />
             )}
             {student.phone && (
               <Button

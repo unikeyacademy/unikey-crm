@@ -10,6 +10,7 @@ import StudentDetail from "./pages/StudentDetail";
 import Tasks from "./pages/Tasks";
 import CalendarPage from "./pages/CalendarPage";
 import Documents from "./pages/Documents";
+import EmailTemplates from "./pages/EmailTemplates";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
@@ -80,6 +81,16 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <Documents />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/email-templates"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <EmailTemplates />
                 </DashboardLayout>
               </ProtectedRoute>
             }
