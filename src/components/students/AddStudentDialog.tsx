@@ -27,6 +27,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     gender: "",
     grade_level: "",
     current_school: "",
+    curriculum: "",
     application_cycle: "",
     ib_predicted_grade: "",
     current_stage: "Initial Consultation",
@@ -53,6 +54,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           gender: formData.gender || null,
           grade_level: formData.grade_level ? parseInt(formData.grade_level) : null,
           current_school: formData.current_school || null,
+          curriculum: formData.curriculum || null,
           application_cycle: formData.application_cycle || null,
           ib_predicted_grade: formData.ib_predicted_grade ? parseInt(formData.ib_predicted_grade) : null,
           current_stage: formData.current_stage,
@@ -79,6 +81,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
         gender: "",
         grade_level: "",
         current_school: "",
+        curriculum: "",
         application_cycle: "",
         ib_predicted_grade: "",
         current_stage: "Initial Consultation",
@@ -225,6 +228,25 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="curriculum">Curriculum</Label>
+                <Select
+                  value={formData.curriculum}
+                  onValueChange={(value) => setFormData({ ...formData, curriculum: value })}
+                >
+                  <SelectTrigger id="curriculum" className="bg-background">
+                    <SelectValue placeholder="Select curriculum" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    <SelectItem value="IB">International Baccalaureate (IB)</SelectItem>
+                    <SelectItem value="A-Levels">A-Levels</SelectItem>
+                    <SelectItem value="AP">Advanced Placement (AP)</SelectItem>
+                    <SelectItem value="IGCSE">IGCSE</SelectItem>
+                    <SelectItem value="National">National Curriculum</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="ib_predicted_grade">IB Predicted Grade (0-45)</Label>
                 <Input
                   id="ib_predicted_grade"
@@ -235,6 +257,9 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                   onChange={(e) => setFormData({ ...formData, ib_predicted_grade: e.target.value })}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="application_cycle">Application Cycle</Label>
                 <Input

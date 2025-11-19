@@ -48,6 +48,10 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
               <p className="font-medium">{student.grade_level ? `Year ${student.grade_level}` : "-"}</p>
             </div>
             <div>
+              <p className="text-sm text-muted-foreground">Curriculum</p>
+              <p className="font-medium">{student.curriculum || "-"}</p>
+            </div>
+            <div>
               <p className="text-sm text-muted-foreground">IB Predicted Grade</p>
               <p className="font-medium">{student.ib_predicted_grade ? `${student.ib_predicted_grade}/45` : "-"}</p>
             </div>
