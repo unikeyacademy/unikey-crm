@@ -262,6 +262,15 @@ Based on this student's profile and the available opportunities, suggest 3-5 ECA
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
+  }
+
+  // If no opportunities in database, return empty result
+  return new Response(
+    JSON.stringify({ suggestions: [], database_count: 0, ai_generated_count: 0 }),
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    }
+  );
   } catch (error) {
     console.error("Error in suggest-ecas function:", error);
     return new Response(
