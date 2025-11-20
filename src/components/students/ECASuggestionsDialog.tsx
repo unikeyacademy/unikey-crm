@@ -329,7 +329,7 @@ export const ECASuggestionsDialog = ({
                 );
               })}
             </div>
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
