@@ -172,34 +172,31 @@ Based on this student's profile and the available opportunities, suggest 3-5 ECA
       }),
     });
 
-        if (aiResponse.ok) {
-          const aiData = await aiResponse.json();
-          const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-          
-          if (toolCall) {
-            const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
-            
-            // Enrich with full opportunity data and mark as database source
-            databaseSuggestions = suggestions.map((suggestion: any) => {
-              const opportunity = opportunities.find(
-                (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
-              );
-              return {
-                ...suggestion,
-                source: "database",
-                opportunity: opportunity || null
-              };
-            }).filter((s: any) => s.opportunity !== null);
+    if (aiResponse.ok) {
+      const aiData = await aiResponse.json();
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      
+      if (toolCall) {
+        const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
+        
+        // Enrich with full opportunity data and mark as database source
+        databaseSuggestions = suggestions.map((suggestion: any) => {
+          const opportunity = opportunities.find(
+            (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
+          );
+          return {
+            ...suggestion,
+            source: "database",
+            opportunity: opportunity || null
+          };
+        }).filter((s: any) => s.opportunity !== null);
 
-            console.log(`Stage 1: Found ${databaseSuggestions.length} database suggestions`);
-          }
-        } else {
-          console.error("Stage 1 AI call failed:", aiResponse.status);
-        }
-      } catch (error) {
-        console.error("Stage 1 error:", error);
+        console.log(`Stage 1: Found ${databaseSuggestions.length} database suggestions`);
       }
+    } else {
+      console.error("Stage 1 AI call failed:", aiResponse.status);
     }
+  }
 
     // ===== STAGE 2: Gap Analysis and AI Discovery =====
     const shouldRunStage2 = databaseSuggestions.length < 3 || 
