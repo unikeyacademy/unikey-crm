@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Lightbulb, ExternalLink, Plus, ThumbsUp, ThumbsDown, Loader2 } from "lucide-react";
+import { Lightbulb, ExternalLink, Plus, ThumbsUp, ThumbsDown, Loader2, Database, Sparkles, Save } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface ECASuggestionsDialogProps {
@@ -26,6 +26,8 @@ export const ECASuggestionsDialog = ({
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingAdd, setLoadingAdd] = useState<string | null>(null);
+  const [databaseCount, setDatabaseCount] = useState(0);
+  const [aiGeneratedCount, setAiGeneratedCount] = useState(0);
 
   const fetchSuggestions = async () => {
     setLoading(true);
@@ -47,6 +49,9 @@ export const ECASuggestionsDialog = ({
       }
 
       setSuggestions(data.suggestions || []);
+      setDatabaseCount(data.database_count || 0);
+      setAiGeneratedCount(data.ai_generated_count || 0);
+      
       if (data.suggestions?.length === 0) {
         if (data.message) {
           toast.info(data.message);
@@ -54,7 +59,10 @@ export const ECASuggestionsDialog = ({
           toast.info("No suitable opportunities found at this time");
         }
       } else {
-        toast.success(`Found ${data.suggestions.length} recommendations`);
+        const dbMsg = data.database_count ? `${data.database_count} from database` : "";
+        const aiMsg = data.ai_generated_count ? `${data.ai_generated_count} AI-discovered` : "";
+        const parts = [dbMsg, aiMsg].filter(Boolean);
+        toast.success(`Found ${data.suggestions.length} recommendations (${parts.join(", ")})`);
       }
     } catch (error: any) {
       toast.error("Failed to fetch suggestions");
@@ -65,7 +73,8 @@ export const ECASuggestionsDialog = ({
   };
 
   const handleAddToProfile = async (suggestion: any) => {
-    setLoadingAdd(suggestion.opportunity.id);
+    const oppId = suggestion.opportunity.id || suggestion.opportunity.name;
+    setLoadingAdd(oppId);
     
     try {
       const { error } = await supabase.from("student_ecas").insert([{
@@ -99,6 +108,71 @@ export const ECASuggestionsDialog = ({
     }
   };
 
+  const handleSaveAndAddToProfile = async (suggestion: any) => {
+    const oppId = suggestion.opportunity.name;
+    setLoadingAdd(oppId);
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      // First, save to eca_opportunities database
+      const { data: newOpp, error: oppError } = await supabase
+        .from("eca_opportunities")
+        .insert([{
+          name: suggestion.opportunity.name,
+          type: suggestion.opportunity.type,
+          subject_areas: suggestion.opportunity.subject_areas || [],
+          eligibility: suggestion.opportunity.eligibility,
+          time_commitment: suggestion.opportunity.time_commitment,
+          cost: suggestion.opportunity.cost,
+          prestige_level: suggestion.opportunity.prestige_level,
+          deadline_type: suggestion.opportunity.deadline_type,
+          deadline_date: suggestion.opportunity.deadline_date,
+          website: suggestion.opportunity.website,
+          is_active: true,
+          is_recommended: false,
+          created_by: user.id,
+          internal_notes: `AI-discovered opportunity. ${suggestion.reasoning}`
+        }])
+        .select()
+        .single();
+
+      if (oppError) throw oppError;
+
+      // Then add to student profile
+      const { error: ecaError } = await supabase.from("student_ecas").insert([{
+        student_id: studentId,
+        eca_name: suggestion.opportunity.name,
+        eca_type: suggestion.opportunity.type,
+        description: `${suggestion.reasoning}\n\nKey Benefits:\n${suggestion.key_benefits?.join("\n")}`,
+        status: "planning",
+      }]);
+
+      if (ecaError) throw ecaError;
+
+      toast.success(`Added ${suggestion.opportunity.name} to database and student profile`);
+      if (onECAAdded) onECAAdded();
+      
+      // Create task reminder
+      await supabase.from("tasks").insert([{
+        title: `Research ${suggestion.opportunity.name}`,
+        description: suggestion.action_items?.join("\n") || "Research requirements and deadlines",
+        student_id: studentId,
+        task_type: "ECA Planning",
+        priority: "medium",
+        status: "pending",
+        due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      }]);
+    } catch (error: any) {
+      toast.error("Failed to save ECA");
+      console.error(error);
+    } finally {
+      setLoadingAdd(null);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -110,9 +184,9 @@ export const ECASuggestionsDialog = ({
         </DialogHeader>
 
         {!loading && suggestions.length === 0 ? (
-          <div className="py-12 text-center space-y-4">
-            <p className="text-muted-foreground">
-              Get AI-powered ECA recommendations tailored to this student's profile
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              Click below to get AI-powered ECA suggestions tailored to {studentName}'s profile
             </p>
             <Button onClick={fetchSuggestions}>
               <Lightbulb className="mr-2 h-4 w-4" />
@@ -120,20 +194,28 @@ export const ECASuggestionsDialog = ({
             </Button>
           </div>
         ) : loading ? (
-          <div className="py-12 text-center space-y-4">
+          <div className="text-center py-8">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Analyzing student profile and opportunities...</p>
+            <p className="text-muted-foreground mt-4">Analyzing student profile and discovering opportunities...</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">
-                {suggestions.length} recommendations based on student profile
-              </p>
-              <Button variant="outline" size="sm" onClick={fetchSuggestions}>
-                Refresh Suggestions
-              </Button>
-            </div>
+          <>
+            {(databaseCount > 0 || aiGeneratedCount > 0) && (
+              <div className="flex gap-4 mb-6 p-4 bg-muted/50 rounded-lg">
+                {databaseCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Database className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium">{databaseCount} from your database</span>
+                  </div>
+                )}
+                {aiGeneratedCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-medium">{aiGeneratedCount} AI-discovered</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4">
               {suggestions.map((suggestion, index) => {

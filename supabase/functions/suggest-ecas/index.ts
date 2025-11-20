@@ -62,22 +62,6 @@ serve(async (req) => {
 
     console.log(`Found ${opportunities?.length || 0} opportunities`);
 
-    // Check if there are any opportunities available
-    if (!opportunities || opportunities.length === 0) {
-      console.log("No opportunities in database, returning empty suggestions");
-      return new Response(
-        JSON.stringify({ 
-          suggestions: [],
-          message: "No ECA opportunities available in the database yet. Please add opportunities in the ECA Database page first."
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log("Calling AI for suggestions...");
-
     // Prepare context for AI
     const studentContext = `
 Student Profile:
@@ -92,7 +76,16 @@ Student Profile:
 - University Targets: ${student.student_university_targets?.map((u: any) => `${u.university_name} (${u.country})`).join(", ") || "None"}
 `;
 
-    const opportunitiesContext = opportunities?.map((opp) => `
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY not configured");
+    }
+
+    let databaseSuggestions = [];
+
+    // STAGE 1: Database-based suggestions (only if opportunities exist)
+    if (opportunities && opportunities.length > 0) {
+      const opportunitiesContext = opportunities.map((opp) => `
 - ${opp.name}
   Type: ${opp.type}
   Subject Areas: ${opp.subject_areas?.join(", ")}
@@ -102,32 +95,27 @@ Student Profile:
   Cost: ${opp.cost || "Free"}
   Deadline: ${opp.deadline_date ? new Date(opp.deadline_date).toLocaleDateString() : "Rolling"}
   ${opp.past_success_notes ? `Past Success: ${opp.past_success_notes}` : ""}
-`).join("\n") || "No opportunities available";
+`).join("\n");
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
-    }
+      const systemPrompt = `You are a university admissions consultant specializing in extracurricular activities (ECAs).
 
-    const systemPrompt = `You are an expert university admissions consultant specializing in extracurricular activity (ECA) planning. 
-Your task is to analyze a student's profile and suggest the most suitable ECA opportunities from a curated database.
+Your task is to analyze a student's profile and the available ECA opportunities from our database,
+then suggest 3-5 opportunities that would best strengthen their university applications.
 
-Consider:
-1. Alignment with academic interests and target universities
-2. Student's current stage (avoid overwhelming early-stage students)
-3. Prestige and impact (prioritize high-value opportunities)
-4. Variety (ensure diverse experience types)
-5. Practical constraints (time, cost, deadlines)
-6. Past success stories from your organization
+Focus on:
+1. Academic alignment with their subject choices and interests
+2. Fit with their target universities and regions
+3. Time commitment feasibility
+4. Prestige and competitiveness appropriate for their profile
+5. Balance across different types of activities
+6. Filling gaps in their current ECA portfolio`;
 
-Return 3-5 highly recommended opportunities with clear reasoning.`;
+      const userPrompt = `${studentContext}
 
-    const userPrompt = `${studentContext}
-
-Available Opportunities:
+Available ECA Opportunities:
 ${opportunitiesContext}
 
-Analyze this student and suggest 3-5 ECA opportunities that would be most beneficial for their profile and university goals.`;
+Based on this student's profile and the available opportunities, suggest 3-5 ECAs that would be most beneficial.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
