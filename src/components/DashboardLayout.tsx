@@ -43,6 +43,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Tasks", href: "/tasks", icon: CheckSquare },
     { name: "Documents", href: "/documents", icon: FileText },
     { name: "ECA Database", href: "/eca-database", icon: Lightbulb },
+    { name: "ECA Discovery", href: "/eca-discovery", icon: Lightbulb },
     { name: "Email Templates", href: "/email-templates", icon: Mail },
     { name: "Email Automation", href: "/email-automation", icon: Zap },
     { name: "Requests", href: "/requests", icon: MessageSquare },
