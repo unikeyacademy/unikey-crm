@@ -81,10 +81,12 @@ Student Profile:
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    let databaseSuggestions = [];
+    let databaseSuggestions: any[] = [];
+    let aiGeneratedSuggestions: any[] = [];
 
-    // STAGE 1: Database-based suggestions (only if opportunities exist)
+    // ===== STAGE 1: Database-based suggestions =====
     if (opportunities && opportunities.length > 0) {
+      console.log("STAGE 1: Analyzing database opportunities...");
       const opportunitiesContext = opportunities.map((opp) => `
 - ${opp.name}
   Type: ${opp.type}
@@ -124,7 +126,7 @@ Based on this student's profile and the available opportunities, suggest 3-5 ECA
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }
@@ -170,107 +172,181 @@ Based on this student's profile and the available opportunities, suggest 3-5 ECA
       }),
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to your workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response(JSON.stringify({ error: "AI processing failed" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const aiData = await aiResponse.json();
-    console.log("AI response received:", JSON.stringify(aiData, null, 2));
-    
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      console.error("No tool call in AI response");
-      console.error("Full AI response:", JSON.stringify(aiData, null, 2));
-      
-      // Try to extract content directly if no tool call
-      const content = aiData.choices?.[0]?.message?.content;
-      if (content) {
-        console.log("Attempting to parse content directly:", content);
-        try {
-          const parsed = JSON.parse(content);
-          if (parsed.suggestions) {
-            console.log("Successfully parsed suggestions from content");
-            const suggestions = parsed.suggestions;
+        if (aiResponse.ok) {
+          const aiData = await aiResponse.json();
+          const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+          
+          if (toolCall) {
+            const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
             
-            // Enrich suggestions with full opportunity data
-            const enrichedSuggestions = suggestions.map((suggestion: any) => {
-              const opportunity = opportunities?.find(
+            // Enrich with full opportunity data and mark as database source
+            databaseSuggestions = suggestions.map((suggestion: any) => {
+              const opportunity = opportunities.find(
                 (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
               );
               return {
                 ...suggestion,
+                source: "database",
                 opportunity: opportunity || null
               };
             }).filter((s: any) => s.opportunity !== null);
 
-            return new Response(
-              JSON.stringify({ suggestions: enrichedSuggestions }),
-              {
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
-              }
-            );
+            console.log(`Stage 1: Found ${databaseSuggestions.length} database suggestions`);
           }
-        } catch (e) {
-          console.error("Failed to parse content as JSON:", e);
+        } else {
+          console.error("Stage 1 AI call failed:", aiResponse.status);
         }
+      } catch (error) {
+        console.error("Stage 1 error:", error);
       }
-      
-      return new Response(JSON.stringify({ error: "Invalid AI response format" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
     }
 
-    const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
+    // ===== STAGE 2: Gap Analysis and AI Discovery =====
+    const shouldRunStage2 = databaseSuggestions.length < 3 || 
+      (student.academic_interests && student.academic_interests.length > 0);
 
-    // Enrich suggestions with full opportunity data
-    const enrichedSuggestions = suggestions.map((suggestion: any) => {
-      const opportunity = opportunities?.find(
-        (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
-      );
-      return {
-        ...suggestion,
-        opportunity: opportunity || null
-      };
-    }).filter((s: any) => s.opportunity !== null);
+    if (shouldRunStage2) {
+      console.log("STAGE 2: Generating AI-discovered opportunities...");
 
-    console.log(`Returning ${enrichedSuggestions.length} suggestions`);
+      const discoveryPrompt = `You are a university admissions consultant with expertise in discovering innovative extracurricular opportunities.
+
+Analyze this student's profile and generate 2-3 NEW, creative ECA opportunities that would strengthen their application. These should be real opportunities that exist (competitions, programs, research, projects) but may not be in our current database.
+
+${studentContext}
+
+Generate opportunities that:
+1. Fill gaps in their current profile
+2. Align with their academic interests and target universities
+3. Are appropriate for their grade level and timeline
+4. Stand out and demonstrate initiative
+5. Are actually accessible/available to students
+
+For each opportunity, provide complete details as if you were adding it to a database.`;
+
+      try {
+        const discoveryResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: "You are a university admissions consultant specializing in discovering and recommending extracurricular opportunities." },
+              { role: "user", content: discoveryPrompt }
+            ],
+            tools: [{
+              type: "function",
+              function: {
+                name: "generate_eca_opportunities",
+                description: "Generate new ECA opportunities with complete details",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    opportunities: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          name: { type: "string", description: "Name of the opportunity" },
+                          type: { type: "string", description: "Type of ECA (e.g., Competition, Research, Project, Volunteering)" },
+                          subject_areas: { 
+                            type: "array", 
+                            items: { type: "string" },
+                            description: "Relevant subject areas"
+                          },
+                          eligibility: { type: "string", description: "Who can participate" },
+                          time_commitment: { type: "string", description: "Expected time commitment" },
+                          cost: { type: "string", description: "Cost information" },
+                          prestige_level: { type: "string", description: "Prestige level (High/Medium/Low)" },
+                          deadline_type: { type: "string", description: "Deadline type (annual/rolling/seasonal)" },
+                          website: { type: "string", description: "Official website URL if known" },
+                          fit_score: { type: "number", minimum: 1, maximum: 10, description: "Fit for this specific student" },
+                          reasoning: { type: "string", description: "Why this is recommended for this student" },
+                          key_benefits: {
+                            type: "array",
+                            items: { type: "string" },
+                            description: "Key benefits for this student"
+                          }
+                        },
+                        required: ["name", "type", "subject_areas", "eligibility", "time_commitment", "cost", "prestige_level", "fit_score", "reasoning", "key_benefits"],
+                        additionalProperties: false
+                      }
+                    }
+                  },
+                  required: ["opportunities"],
+                  additionalProperties: false
+                }
+              }
+            }],
+            tool_choice: { type: "function", function: { name: "generate_eca_opportunities" } }
+          }),
+        });
+
+        if (discoveryResponse.ok) {
+          const discoveryData = await discoveryResponse.json();
+          const toolCall = discoveryData.choices?.[0]?.message?.tool_calls?.[0];
+          
+          if (toolCall) {
+            const generatedOpps = JSON.parse(toolCall.function.arguments).opportunities;
+            
+            // Mark as AI-generated and structure for UI
+            aiGeneratedSuggestions = generatedOpps.map((opp: any) => ({
+              opportunity_name: opp.name,
+              fit_score: opp.fit_score,
+              reasoning: opp.reasoning,
+              key_benefits: opp.key_benefits,
+              action_items: [
+                "Research this opportunity online",
+                "Check eligibility requirements",
+                "Mark application deadline in calendar"
+              ],
+              source: "ai_generated",
+              opportunity: {
+                id: null,
+                name: opp.name,
+                type: opp.type,
+                subject_areas: opp.subject_areas,
+                eligibility: opp.eligibility,
+                time_commitment: opp.time_commitment,
+                cost: opp.cost,
+                prestige_level: opp.prestige_level,
+                deadline_type: opp.deadline_type,
+                deadline_date: null,
+                website: opp.website || null,
+                is_active: true,
+                is_recommended: false
+              }
+            }));
+
+            console.log(`Stage 2: Generated ${aiGeneratedSuggestions.length} AI opportunities`);
+          }
+        } else {
+          console.error("Stage 2 AI call failed:", discoveryResponse.status);
+        }
+      } catch (error) {
+        console.error("Stage 2 error:", error);
+        // Continue with Stage 1 results even if Stage 2 fails
+      }
+    }
+
+    // ===== Combine and Return Results =====
+    const allSuggestions = [...databaseSuggestions, ...aiGeneratedSuggestions];
+    
+    console.log(`Returning ${allSuggestions.length} total suggestions (${databaseSuggestions.length} database, ${aiGeneratedSuggestions.length} AI-generated)`);
 
     return new Response(
-      JSON.stringify({ suggestions: enrichedSuggestions }),
+      JSON.stringify({ 
+        suggestions: allSuggestions,
+        database_count: databaseSuggestions.length,
+        ai_generated_count: aiGeneratedSuggestions.length
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
-  }
 
-  // If no opportunities in database, return empty result
-  return new Response(
-    JSON.stringify({ suggestions: [], database_count: 0, ai_generated_count: 0 }),
-    {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    }
-  );
   } catch (error) {
     console.error("Error in suggest-ecas function:", error);
     return new Response(
