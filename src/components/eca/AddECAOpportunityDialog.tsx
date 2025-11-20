@@ -24,6 +24,8 @@ export const AddECAOpportunityDialog = ({
   onSuccess
 }: AddECAOpportunityDialogProps) => {
   const [loading, setLoading] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [isEnriching, setIsEnriching] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -91,6 +93,52 @@ export const AddECAOpportunityDialog = ({
     setNewSubject("");
     setNewDoc("");
     setNewBestFor("");
+    setUrlInput('');
+  };
+
+  const handleAutoFill = async () => {
+    if (!urlInput.trim()) {
+      toast.error("Please enter a URL to auto-fill the form");
+      return;
+    }
+
+    setIsEnriching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enrich-eca-opportunity', {
+        body: { url: urlInput }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.data) {
+        setFormData({
+          name: data.data.name || "",
+          type: data.data.type || "",
+          eligibility: data.data.eligibility || "",
+          deadline_date: data.data.deadline_date || "",
+          deadline_type: data.data.deadline_type || "annual",
+          registration_fee: data.data.registration_fee || "",
+          cost: data.data.cost || "",
+          prestige_level: data.data.prestige_level || "medium",
+          time_commitment: data.data.time_commitment || "",
+          website: data.data.website || urlInput,
+          past_success_notes: "",
+          internal_notes: data.data.internal_notes || "",
+        });
+        setSubjectAreas(data.data.subject_areas || []);
+        setRequiredDocs(data.data.required_documents || []);
+        setBestFor(data.data.best_for || []);
+
+        toast.success("Form populated! Please review and edit as needed.");
+      } else {
+        throw new Error(data.error || 'Failed to extract information');
+      }
+    } catch (error) {
+      console.error('Error auto-filling form:', error);
+      toast.error(error instanceof Error ? error.message : "Could not extract information from URL");
+    } finally {
+      setIsEnriching(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -147,6 +195,35 @@ export const AddECAOpportunityDialog = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* AI Auto-Fill Section */}
+          {!opportunity && (
+            <div className="bg-muted/50 p-4 rounded-lg border border-border space-y-2">
+              <label className="block text-sm font-semibold">🤖 AI Auto-Fill from URL</label>
+              <p className="text-xs text-muted-foreground">
+                Paste a competition or program URL to automatically extract details
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  value={urlInput}
+                  onChange={(e) => setUrlInput(e.target.value)}
+                  placeholder="https://example.com/competition"
+                  disabled={isEnriching}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  onClick={handleAutoFill}
+                  disabled={isEnriching || !urlInput.trim()}
+                  variant="secondary"
+                  className="whitespace-nowrap"
+                >
+                  {isEnriching ? 'Extracting...' : 'Auto-Fill'}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
