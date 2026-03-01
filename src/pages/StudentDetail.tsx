@@ -38,6 +38,20 @@ interface Student {
   parent_phone: string | null;
   region_interest: string[] | null;
   academic_interests: string[] | null;
+  passport_nationality: string | null;
+  city: string | null;
+  timezone: string | null;
+  graduation_year: number | null;
+  target_major_primary: string | null;
+  target_major_secondary: string | null;
+  track: string | null;
+  risk_profile: string | null;
+  lead_source: string | null;
+  engagement_stage: string | null;
+  secondary_consultant_id: string | null;
+  current_gpa: string | null;
+  academic_strengths: string | null;
+  academic_weaknesses: string | null;
 }
 
 const StudentDetail = () => {

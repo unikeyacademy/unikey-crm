@@ -43,6 +43,20 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     parent_email: "",
     parent_phone: "",
     notes: "",
+    // New fields
+    passport_nationality: "",
+    city: "",
+    timezone: "",
+    graduation_year: "",
+    target_major_primary: "",
+    target_major_secondary: "",
+    track: "",
+    risk_profile: "",
+    lead_source: "",
+    engagement_stage: "Active",
+    current_gpa: "",
+    academic_strengths: "",
+    academic_weaknesses: "",
   });
 
   const handleAddSubject = () => {
@@ -94,6 +108,20 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           parent_phone: formData.parent_phone || null,
           notes: formData.notes || null,
           status: "active",
+          // New fields
+          passport_nationality: formData.passport_nationality || null,
+          city: formData.city || null,
+          timezone: formData.timezone || null,
+          graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
+          target_major_primary: formData.target_major_primary || null,
+          target_major_secondary: formData.target_major_secondary || null,
+          track: formData.track || null,
+          risk_profile: formData.risk_profile || null,
+          lead_source: formData.lead_source || null,
+          engagement_stage: formData.engagement_stage || null,
+          current_gpa: formData.current_gpa || null,
+          academic_strengths: formData.academic_strengths || null,
+          academic_weaknesses: formData.academic_weaknesses || null,
         },
       ]);
 
@@ -122,6 +150,19 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
         parent_email: "",
         parent_phone: "",
         notes: "",
+        passport_nationality: "",
+        city: "",
+        timezone: "",
+        graduation_year: "",
+        target_major_primary: "",
+        target_major_secondary: "",
+        track: "",
+        risk_profile: "",
+        lead_source: "",
+        engagement_stage: "Active",
+        current_gpa: "",
+        academic_strengths: "",
+        academic_weaknesses: "",
       });
       if (onStudentAdded) onStudentAdded();
     } catch (error: any) {
@@ -146,7 +187,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-sm text-muted-foreground">Basic Information</h3>
+            <h3 className="font-semibold text-sm text-muted-foreground">Identity & Contact</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="student_id">Student ID *</Label>
@@ -223,21 +264,41 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="date_of_birth">Date of Birth</Label>
-              <Input
-                id="date_of_birth"
-                type="date"
-                value={formData.date_of_birth}
-                onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date_of_birth">Date of Birth</Label>
+                <Input
+                  id="date_of_birth"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="passport_nationality">Passport / Nationality</Label>
+                <Input
+                  id="passport_nationality"
+                  value={formData.passport_nationality}
+                  onChange={(e) => setFormData({ ...formData, passport_nationality: e.target.value })}
+                  placeholder="e.g. British, Hong Kong SAR"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City / Timezone</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="e.g. Hong Kong (GMT+8)"
+                />
+              </div>
             </div>
           </div>
 
           {/* Academic Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm text-muted-foreground">Academic Information</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="current_school">Current School</Label>
                 <Input
@@ -257,9 +318,21 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                   onChange={(e) => setFormData({ ...formData, grade_level: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="graduation_year">Graduation Year</Label>
+                <Input
+                  id="graduation_year"
+                  type="number"
+                  min="2024"
+                  max="2035"
+                  value={formData.graduation_year}
+                  onChange={(e) => setFormData({ ...formData, graduation_year: e.target.value })}
+                  placeholder="2026"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="curriculum">Curriculum</Label>
                 <Select
@@ -278,6 +351,15 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="current_gpa">Current GPA / Grades</Label>
+                <Input
+                  id="current_gpa"
+                  value={formData.current_gpa}
+                  onChange={(e) => setFormData({ ...formData, current_gpa: e.target.value })}
+                  placeholder="e.g. 3.8 / 4.0 or 38/45"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="quotation">Quotation</Label>
@@ -334,6 +416,79 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="academic_strengths">Academic Strengths</Label>
+                <Textarea
+                  id="academic_strengths"
+                  value={formData.academic_strengths}
+                  onChange={(e) => setFormData({ ...formData, academic_strengths: e.target.value })}
+                  rows={2}
+                  placeholder="Strong in quantitative reasoning, research skills..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="academic_weaknesses">Academic Weaknesses</Label>
+                <Textarea
+                  id="academic_weaknesses"
+                  value={formData.academic_weaknesses}
+                  onChange={(e) => setFormData({ ...formData, academic_weaknesses: e.target.value })}
+                  rows={2}
+                  placeholder="Needs improvement in essay writing..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Targeting & Strategy */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm text-muted-foreground">Targeting & Strategy</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="target_major_primary">Target Major (Primary)</Label>
+                <Input
+                  id="target_major_primary"
+                  value={formData.target_major_primary}
+                  onChange={(e) => setFormData({ ...formData, target_major_primary: e.target.value })}
+                  placeholder="e.g. Economics"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="target_major_secondary">Target Major (Secondary)</Label>
+                <Input
+                  id="target_major_secondary"
+                  value={formData.target_major_secondary}
+                  onChange={(e) => setFormData({ ...formData, target_major_secondary: e.target.value })}
+                  placeholder="e.g. Political Science"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="track">Track</Label>
+                <Select value={formData.track} onValueChange={(value) => setFormData({ ...formData, track: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select track" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="US Only">US Only</SelectItem>
+                    <SelectItem value="UK Only">UK Only</SelectItem>
+                    <SelectItem value="Dual">Dual (US + UK)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="risk_profile">Risk Profile</Label>
+                <Select value={formData.risk_profile} onValueChange={(value) => setFormData({ ...formData, risk_profile: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select risk profile" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Reach-heavy">Reach-heavy</SelectItem>
+                    <SelectItem value="Balanced">Balanced</SelectItem>
+                    <SelectItem value="Conservative">Conservative</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="application_cycle">Application Cycle</Label>
                 <Input
                   id="application_cycle"
@@ -343,23 +498,58 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                 />
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="current_stage">Current Stage</Label>
-              <Select value={formData.current_stage} onValueChange={(value) => setFormData({ ...formData, current_stage: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Initial Consultation">Initial Consultation</SelectItem>
-                  <SelectItem value="Kickoff / Year 1">Kickoff / Year 1</SelectItem>
-                  <SelectItem value="Year 2">Year 2</SelectItem>
-                  <SelectItem value="Year 3 Pre-Application">Year 3 Pre-Application</SelectItem>
-                  <SelectItem value="Application Season">Application Season</SelectItem>
-                  <SelectItem value="Post-Application">Post-Application</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Commercial & Ownership */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-sm text-muted-foreground">Commercial & Ownership</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="lead_source">Lead Source</Label>
+                <Select value={formData.lead_source} onValueChange={(value) => setFormData({ ...formData, lead_source: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Referral">Referral</SelectItem>
+                    <SelectItem value="Webinar">Webinar</SelectItem>
+                    <SelectItem value="School">School</SelectItem>
+                    <SelectItem value="Inbound">Inbound</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="engagement_stage">Engagement Stage</Label>
+                <Select value={formData.engagement_stage} onValueChange={(value) => setFormData({ ...formData, engagement_stage: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Inquiry">Inquiry</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Deferred">Deferred</SelectItem>
+                    <SelectItem value="Alumni">Alumni</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="current_stage">Current Stage</Label>
+                <Select value={formData.current_stage} onValueChange={(value) => setFormData({ ...formData, current_stage: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Initial Consultation">Initial Consultation</SelectItem>
+                    <SelectItem value="Kickoff / Year 1">Kickoff / Year 1</SelectItem>
+                    <SelectItem value="Year 2">Year 2</SelectItem>
+                    <SelectItem value="Year 3 Pre-Application">Year 3 Pre-Application</SelectItem>
+                    <SelectItem value="Application Season">Application Season</SelectItem>
+                    <SelectItem value="Post-Application">Post-Application</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

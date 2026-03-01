@@ -870,98 +870,140 @@ export type Database = {
       students: {
         Row: {
           academic_interests: string[] | null
+          academic_strengths: string | null
+          academic_weaknesses: string | null
           application_cycle: string | null
           assigned_consultant_id: string | null
+          city: string | null
           contract_signed_date: string | null
           created_at: string
+          current_gpa: string | null
           current_school: string | null
           current_stage: string | null
           curriculum: string | null
           date_of_birth: string | null
           email: string | null
+          engagement_stage: string | null
           first_name: string
           gender: string | null
           grade_level: number | null
+          graduation_year: number | null
           ib_predicted_grade: number | null
           id: string
           last_name: string
+          lead_source: string | null
           notes: string | null
           parent_email: string | null
           parent_names: string | null
           parent_phone: string | null
+          passport_nationality: string | null
           phone: string | null
           preferred_name: string | null
           quotation: string | null
           region_interest: string[] | null
+          risk_profile: string | null
+          secondary_consultant_id: string | null
           stage_history: Json | null
           status: string | null
           student_id: string
           subject_choices: Json | null
           tags: string[] | null
+          target_major_primary: string | null
+          target_major_secondary: string | null
+          timezone: string | null
+          track: string | null
           updated_at: string
         }
         Insert: {
           academic_interests?: string[] | null
+          academic_strengths?: string | null
+          academic_weaknesses?: string | null
           application_cycle?: string | null
           assigned_consultant_id?: string | null
+          city?: string | null
           contract_signed_date?: string | null
           created_at?: string
+          current_gpa?: string | null
           current_school?: string | null
           current_stage?: string | null
           curriculum?: string | null
           date_of_birth?: string | null
           email?: string | null
+          engagement_stage?: string | null
           first_name: string
           gender?: string | null
           grade_level?: number | null
+          graduation_year?: number | null
           ib_predicted_grade?: number | null
           id?: string
           last_name: string
+          lead_source?: string | null
           notes?: string | null
           parent_email?: string | null
           parent_names?: string | null
           parent_phone?: string | null
+          passport_nationality?: string | null
           phone?: string | null
           preferred_name?: string | null
           quotation?: string | null
           region_interest?: string[] | null
+          risk_profile?: string | null
+          secondary_consultant_id?: string | null
           stage_history?: Json | null
           status?: string | null
           student_id: string
           subject_choices?: Json | null
           tags?: string[] | null
+          target_major_primary?: string | null
+          target_major_secondary?: string | null
+          timezone?: string | null
+          track?: string | null
           updated_at?: string
         }
         Update: {
           academic_interests?: string[] | null
+          academic_strengths?: string | null
+          academic_weaknesses?: string | null
           application_cycle?: string | null
           assigned_consultant_id?: string | null
+          city?: string | null
           contract_signed_date?: string | null
           created_at?: string
+          current_gpa?: string | null
           current_school?: string | null
           current_stage?: string | null
           curriculum?: string | null
           date_of_birth?: string | null
           email?: string | null
+          engagement_stage?: string | null
           first_name?: string
           gender?: string | null
           grade_level?: number | null
+          graduation_year?: number | null
           ib_predicted_grade?: number | null
           id?: string
           last_name?: string
+          lead_source?: string | null
           notes?: string | null
           parent_email?: string | null
           parent_names?: string | null
           parent_phone?: string | null
+          passport_nationality?: string | null
           phone?: string | null
           preferred_name?: string | null
           quotation?: string | null
           region_interest?: string[] | null
+          risk_profile?: string | null
+          secondary_consultant_id?: string | null
           stage_history?: Json | null
           status?: string | null
           student_id?: string
           subject_choices?: Json | null
           tags?: string[] | null
+          target_major_primary?: string | null
+          target_major_secondary?: string | null
+          timezone?: string | null
+          track?: string | null
           updated_at?: string
         }
         Relationships: []

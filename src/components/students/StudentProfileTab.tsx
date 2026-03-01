@@ -24,13 +24,57 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-            <p className="text-lg font-semibold text-primary">
-              {student.current_stage || "Initial Consultation"}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="flex-1 p-4 bg-primary/5 rounded-lg border border-primary/20">
+              <p className="text-lg font-semibold text-primary">
+                {student.current_stage || "Initial Consultation"}
+              </p>
+            </div>
+            {student.engagement_stage && (
+              <Badge variant="outline" className="text-sm">
+                {student.engagement_stage}
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Targeting & Strategy */}
+      {(student.target_major_primary || student.track || student.risk_profile) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Targeting & Strategy</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {student.target_major_primary && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Primary Major</p>
+                  <p className="font-medium">{student.target_major_primary}</p>
+                </div>
+              )}
+              {student.target_major_secondary && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Secondary Major</p>
+                  <p className="font-medium">{student.target_major_secondary}</p>
+                </div>
+              )}
+              {student.track && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Track</p>
+                  <Badge variant="secondary">{student.track}</Badge>
+                </div>
+              )}
+              {student.risk_profile && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Risk Profile</p>
+                  <Badge variant="outline">{student.risk_profile}</Badge>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Academic Background */}
       <Card>
@@ -51,22 +95,14 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
               <p className="text-sm text-muted-foreground">Curriculum</p>
               <p className="font-medium">{student.curriculum || "-"}</p>
             </div>
-                {student.subject_choices && student.subject_choices.length > 0 && (
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Subject Choices
-                    </p>
-                    <div className="space-y-1">
-                      {student.subject_choices.map((choice: any, index: number) => (
-                        <div key={index} className="text-sm flex items-center gap-2">
-                          <span className="font-medium">{choice.subject}</span>
-                          <span className="text-muted-foreground">•</span>
-                          <span className="text-muted-foreground">Grade: {choice.predicted_grade}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            <div>
+              <p className="text-sm text-muted-foreground">Graduation Year</p>
+              <p className="font-medium">{student.graduation_year || "-"}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Current GPA / Grades</p>
+              <p className="font-medium">{student.current_gpa || "-"}</p>
+            </div>
             <div>
               <p className="text-sm text-muted-foreground">IB Predicted Grade</p>
               <p className="font-medium">{student.ib_predicted_grade ? `${student.ib_predicted_grade}/45` : "-"}</p>
@@ -76,6 +112,35 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
               <p className="font-medium">{student.application_cycle || "-"}</p>
             </div>
           </div>
+
+          {student.subject_choices && student.subject_choices.length > 0 && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">Subject Choices</p>
+              <div className="space-y-1">
+                {student.subject_choices.map((choice: any, index: number) => (
+                  <div key={index} className="text-sm flex items-center gap-2">
+                    <span className="font-medium">{choice.subject}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">Grade: {choice.predicted_grade}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {student.academic_strengths && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Academic Strengths</p>
+              <p className="text-sm">{student.academic_strengths}</p>
+            </div>
+          )}
+
+          {student.academic_weaknesses && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Academic Weaknesses</p>
+              <p className="text-sm">{student.academic_weaknesses}</p>
+            </div>
+          )}
 
           {student.academic_interests && student.academic_interests.length > 0 && (
             <div>
@@ -136,6 +201,18 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
                 </p>
               </div>
             )}
+            {student.passport_nationality && (
+              <div>
+                <p className="text-sm text-muted-foreground">Passport / Nationality</p>
+                <p className="font-medium">{student.passport_nationality}</p>
+              </div>
+            )}
+            {student.city && (
+              <div>
+                <p className="text-sm text-muted-foreground">City / Timezone</p>
+                <p className="font-medium">{student.city}</p>
+              </div>
+            )}
             {student.email && (
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
@@ -151,6 +228,37 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Commercial & Ownership */}
+      {(student.lead_source || student.engagement_stage || student.quotation) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Commercial & Ownership</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              {student.lead_source && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Lead Source</p>
+                  <p className="font-medium">{student.lead_source}</p>
+                </div>
+              )}
+              {student.engagement_stage && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Engagement Stage</p>
+                  <Badge variant="outline">{student.engagement_stage}</Badge>
+                </div>
+              )}
+              {student.quotation && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Quotation</p>
+                  <p className="font-medium">{student.quotation}</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Parent Information */}
       {(student.parent_names || student.parent_email || student.parent_phone) && (
