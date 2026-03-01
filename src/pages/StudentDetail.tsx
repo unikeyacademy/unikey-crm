@@ -15,6 +15,7 @@ import StudentECAsTab from "@/components/students/StudentECAsTab";
 import StudentUniversitiesTab from "@/components/students/StudentUniversitiesTab";
 import StudentDocumentsTab from "@/components/students/StudentDocumentsTab";
 import StudentChecklistsTab from "@/components/students/StudentChecklistsTab";
+import StudentEssaysTab from "@/components/students/StudentEssaysTab";
 
 interface Student {
   id: string;
@@ -199,12 +200,13 @@ const StudentDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-7">
+              <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="consultations">Consultations</TabsTrigger>
                 <TabsTrigger value="tasks">Tasks</TabsTrigger>
                 <TabsTrigger value="ecas">ECAs</TabsTrigger>
                 <TabsTrigger value="universities">Universities</TabsTrigger>
+                <TabsTrigger value="essays">Essays</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="checklists">Checklists</TabsTrigger>
               </TabsList>
@@ -227,6 +229,10 @@ const StudentDetail = () => {
 
         <TabsContent value="universities">
           <StudentUniversitiesTab studentId={student.id} />
+        </TabsContent>
+
+        <TabsContent value="essays">
+          <StudentEssaysTab studentId={student.id} />
         </TabsContent>
 
         <TabsContent value="documents">
