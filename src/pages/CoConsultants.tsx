@@ -5,53 +5,55 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, Clock, DollarSign } from "lucide-react";
+import { Plus, Users, Clock, DollarSign, Pencil } from "lucide-react";
 import LogHoursDialog from "@/components/co-consultants/LogHoursDialog";
 import MonthlySummary from "@/components/co-consultants/MonthlySummary";
+import AddCoConsultantDialog from "@/components/co-consultants/AddCoConsultantDialog";
 
-interface CoConsultant {
+interface CoConsultantProfile {
   id: string;
-  full_name: string | null;
+  full_name: string;
   email: string;
-  studentCount: number;
-  monthHours: number;
-  monthAmount: number;
+  phone: string | null;
+  default_hourly_rate: number;
+  specialisation: string | null;
+  contract_start_date: string | null;
+  contract_end_date: string | null;
+  payment_terms: string | null;
+  bank_details: string | null;
+  notes: string | null;
+  is_active: boolean;
+  monthHours?: number;
+  monthAmount?: number;
 }
 
 const CoConsultants = () => {
-  const [consultants, setConsultants] = useState<CoConsultant[]>([]);
+  const [profiles, setProfiles] = useState<CoConsultantProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [logOpen, setLogOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [editProfile, setEditProfile] = useState<CoConsultantProfile | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
   const [selectedConsultant, setSelectedConsultant] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => { fetchConsultants(); }, [selectedMonth]);
+  useEffect(() => { fetchData(); }, [selectedMonth]);
 
-  const fetchConsultants = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      // Get students with secondary_consultant_id set
-      const { data: students } = await supabase
-        .from("students")
-        .select("secondary_consultant_id")
-        .not("secondary_consultant_id", "is", null);
+      const { data: profileData } = await supabase
+        .from("co_consultant_profiles")
+        .select("*")
+        .order("full_name");
 
-      const consultantIds = [...new Set((students || []).map(s => s.secondary_consultant_id).filter(Boolean))] as string[];
-
-      if (consultantIds.length === 0) {
-        setConsultants([]);
+      if (!profileData || profileData.length === 0) {
+        setProfiles([]);
         setLoading(false);
         return;
       }
-
-      // Get profiles
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, email")
-        .in("id", consultantIds);
 
       // Get hours for selected month
       const startDate = `${selectedMonth}-01`;
@@ -59,36 +61,27 @@ const CoConsultants = () => {
 
       const { data: hours } = await supabase
         .from("co_consultant_hours")
-        .select("consultant_id, hours, hourly_rate")
-        .in("consultant_id", consultantIds)
+        .select("co_consultant_profile_id, hours, hourly_rate")
+        .not("co_consultant_profile_id", "is", null)
         .gte("work_date", startDate)
         .lte("work_date", endDate);
 
-      // Count students per consultant
-      const studentCounts: Record<string, number> = {};
-      (students || []).forEach(s => {
-        const cid = s.secondary_consultant_id as string;
-        studentCounts[cid] = (studentCounts[cid] || 0) + 1;
-      });
-
-      // Sum hours per consultant
       const hourSums: Record<string, { hours: number; amount: number }> = {};
       (hours || []).forEach(h => {
-        if (!hourSums[h.consultant_id]) hourSums[h.consultant_id] = { hours: 0, amount: 0 };
-        hourSums[h.consultant_id].hours += Number(h.hours);
-        hourSums[h.consultant_id].amount += Number(h.hours) * Number(h.hourly_rate);
+        const pid = h.co_consultant_profile_id as string;
+        if (!pid) return;
+        if (!hourSums[pid]) hourSums[pid] = { hours: 0, amount: 0 };
+        hourSums[pid].hours += Number(h.hours);
+        hourSums[pid].amount += Number(h.hours) * Number(h.hourly_rate);
       });
 
-      const result: CoConsultant[] = (profiles || []).map(p => ({
-        id: p.id,
-        full_name: p.full_name,
-        email: p.email,
-        studentCount: studentCounts[p.id] || 0,
+      const result: CoConsultantProfile[] = (profileData as any[]).map(p => ({
+        ...p,
         monthHours: hourSums[p.id]?.hours || 0,
         monthAmount: hourSums[p.id]?.amount || 0,
       }));
 
-      setConsultants(result);
+      setProfiles(result);
     } catch {
       // silently handle
     } finally {
@@ -100,27 +93,29 @@ const CoConsultants = () => {
 
   if (selectedConsultant) {
     return (
-      <div>
-        <MonthlySummary
-          consultantId={selectedConsultant.id}
-          consultantName={selectedConsultant.name}
-          month={selectedMonth}
-          onBack={() => setSelectedConsultant(null)}
-        />
-      </div>
+      <MonthlySummary
+        consultantId={selectedConsultant.id}
+        consultantName={selectedConsultant.name}
+        month={selectedMonth}
+        onBack={() => setSelectedConsultant(null)}
+      />
     );
   }
+
+  const activeProfiles = profiles.filter(p => p.is_active);
+  const inactiveProfiles = profiles.filter(p => !p.is_active);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Co-Consultants</h1>
-          <p className="text-muted-foreground">Manage contractor hours and monthly payments</p>
+          <p className="text-muted-foreground">Manage contractor profiles, hours, and monthly payments</p>
         </div>
         <div className="flex items-center gap-3">
           <Input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="w-44" />
-          <Button onClick={() => setLogOpen(true)} className="gap-1"><Plus className="w-4 h-4" /> Log Hours</Button>
+          <Button variant="outline" onClick={() => setLogOpen(true)} className="gap-1"><Clock className="w-4 h-4" /> Log Hours</Button>
+          <Button onClick={() => { setEditProfile(null); setAddOpen(true); }} className="gap-1"><Plus className="w-4 h-4" /> Add Co-Consultant</Button>
         </div>
       </div>
 
@@ -128,56 +123,61 @@ const CoConsultants = () => {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Users className="w-4 h-4" /> Co-Consultants</div>
-            <p className="text-2xl font-bold">{consultants.length}</p>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Users className="w-4 h-4" /> Active Co-Consultants</div>
+            <p className="text-2xl font-bold">{activeProfiles.length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><Clock className="w-4 h-4" /> Total Hours ({monthLabel})</div>
-            <p className="text-2xl font-bold">{consultants.reduce((s, c) => s + c.monthHours, 0).toFixed(1)}h</p>
+            <p className="text-2xl font-bold">{profiles.reduce((s, c) => s + (c.monthHours || 0), 0).toFixed(1)}h</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1"><DollarSign className="w-4 h-4" /> Total Owed ({monthLabel})</div>
-            <p className="text-2xl font-bold">${consultants.reduce((s, c) => s + c.monthAmount, 0).toFixed(2)}</p>
+            <p className="text-2xl font-bold">${profiles.reduce((s, c) => s + (c.monthAmount || 0), 0).toFixed(2)}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Consultant list */}
+      {/* Profiles table */}
       <Card>
-        <CardHeader><CardTitle>Co-Consultant Overview</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Co-Consultant Profiles</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
             <div className="py-8 text-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" /><p className="text-muted-foreground text-sm">Loading...</p></div>
-          ) : consultants.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No co-consultants found. Assign a secondary consultant to a student to get started.</p>
+          ) : profiles.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No co-consultants yet. Click "Add Co-Consultant" to create one.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Students</TableHead>
+                  <TableHead>Specialisation</TableHead>
+                  <TableHead>Rate</TableHead>
                   <TableHead>Hours ({monthLabel})</TableHead>
-                  <TableHead>Amount Owed</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {consultants.map(c => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.full_name || "—"}</TableCell>
+                {[...activeProfiles, ...inactiveProfiles].map(c => (
+                  <TableRow key={c.id} className={!c.is_active ? "opacity-50" : ""}>
+                    <TableCell className="font-medium">{c.full_name}</TableCell>
                     <TableCell>{c.email}</TableCell>
-                    <TableCell><Badge variant="secondary">{c.studentCount}</Badge></TableCell>
-                    <TableCell>{c.monthHours.toFixed(1)}h</TableCell>
-                    <TableCell className="font-medium">${c.monthAmount.toFixed(2)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{c.specialisation || "—"}</TableCell>
+                    <TableCell>${Number(c.default_hourly_rate).toFixed(2)}/h</TableCell>
+                    <TableCell>{(c.monthHours || 0).toFixed(1)}h</TableCell>
+                    <TableCell className="font-medium">${(c.monthAmount || 0).toFixed(2)}</TableCell>
+                    <TableCell><Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                     <TableCell>
-                      <Button size="sm" variant="outline" onClick={() => setSelectedConsultant({ id: c.id, name: c.full_name || c.email })}>
-                        View Summary
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => { setEditProfile(c); setAddOpen(true); }}><Pencil className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="outline" onClick={() => setSelectedConsultant({ id: c.id, name: c.full_name })}>Summary</Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -187,7 +187,8 @@ const CoConsultants = () => {
         </CardContent>
       </Card>
 
-      <LogHoursDialog open={logOpen} onOpenChange={setLogOpen} onSuccess={fetchConsultants} />
+      <LogHoursDialog open={logOpen} onOpenChange={setLogOpen} onSuccess={fetchData} />
+      <AddCoConsultantDialog open={addOpen} onOpenChange={setAddOpen} onSuccess={fetchData} editProfile={editProfile} />
     </div>
   );
 };
