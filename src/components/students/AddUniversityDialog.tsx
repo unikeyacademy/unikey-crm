@@ -31,6 +31,14 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
     status: "researching",
     priority: "medium",
     notes: "",
+    round: "",
+    offer_conditions: "",
+    firm_choice: false,
+    insurance_choice: false,
+    waitlist_plan_status: "",
+    clearing_shortlist: false,
+    enrolment_intention: "",
+    matriculation_confirmed: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +57,14 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
           status: formData.status,
           priority: formData.priority,
           notes: formData.notes || null,
+          round: formData.round || null,
+          offer_conditions: formData.offer_conditions || null,
+          firm_choice: formData.firm_choice,
+          insurance_choice: formData.insurance_choice,
+          waitlist_plan_status: formData.waitlist_plan_status || null,
+          clearing_shortlist: formData.clearing_shortlist,
+          enrolment_intention: formData.enrolment_intention || null,
+          matriculation_confirmed: formData.matriculation_confirmed,
         },
       ]).select();
 
@@ -107,6 +123,14 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
       status: "researching",
       priority: "medium",
       notes: "",
+      round: "",
+      offer_conditions: "",
+      firm_choice: false,
+      insurance_choice: false,
+      waitlist_plan_status: "",
+      clearing_shortlist: false,
+      enrolment_intention: "",
+      matriculation_confirmed: false,
     });
     onAdded();
   };
@@ -236,6 +260,30 @@ const AddUniversityDialog = ({ studentId, onAdded }: AddUniversityDialogProps) =
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Round */}
+          <div className="space-y-2">
+            <Label htmlFor="round">Application Round</Label>
+            <Select
+              value={formData.round}
+              onValueChange={(value) => setFormData({ ...formData, round: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select round" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ED">Early Decision (ED)</SelectItem>
+                <SelectItem value="ED2">Early Decision II (ED2)</SelectItem>
+                <SelectItem value="EA">Early Action (EA)</SelectItem>
+                <SelectItem value="REA">Restrictive Early Action (REA)</SelectItem>
+                <SelectItem value="RD">Regular Decision (RD)</SelectItem>
+                <SelectItem value="Rolling">Rolling</SelectItem>
+                <SelectItem value="Oxbridge">Oxbridge (Oct 15)</SelectItem>
+                <SelectItem value="Medicine">Medicine (Oct 15)</SelectItem>
+                <SelectItem value="UCAS_Jan">UCAS January</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

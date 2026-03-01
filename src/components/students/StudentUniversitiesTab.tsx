@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Globe, Sparkles } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Calendar, Globe, Sparkles, ChevronDown, ChevronUp, Shield, Award } from "lucide-react";
 import { toast } from "sonner";
 import AddUniversityDialog from "./AddUniversityDialog";
 import DeadlineCascadeDialog from "./DeadlineCascadeDialog";
@@ -19,6 +23,14 @@ interface UniversityTarget {
   priority: string;
   notes: string | null;
   tasks_generated: boolean;
+  round: string | null;
+  offer_conditions: string | null;
+  firm_choice: boolean;
+  insurance_choice: boolean;
+  waitlist_plan_status: string | null;
+  clearing_shortlist: boolean;
+  enrolment_intention: string | null;
+  matriculation_confirmed: boolean;
 }
 
 interface StudentUniversitiesTabProps {
@@ -30,6 +42,7 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
   const [loading, setLoading] = useState(true);
   const [cascadeUni, setCascadeUni] = useState<UniversityTarget | null>(null);
   const [cascadeOpen, setCascadeOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUniversities();
@@ -92,6 +105,22 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
     fetchUniversities();
   };
 
+  const updateField = async (id: string, field: string, value: any) => {
+    try {
+      const { error } = await supabase
+        .from("student_university_targets")
+        .update({ [field]: value })
+        .eq("id", id);
+      if (error) throw error;
+      setUniversities((prev) =>
+        prev.map((u) => (u.id === id ? { ...u, [field]: value } : u))
+      );
+    } catch (error: any) {
+      toast.error("Error updating field");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -136,7 +165,7 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               {uni.country && (
                 <div className="flex items-center gap-2">
                   <Globe className="w-4 h-4 text-muted-foreground" />
@@ -149,11 +178,30 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
                   {uni.application_system}
                 </div>
               )}
+              {uni.round && (
+                <div>
+                  <span className="text-muted-foreground">Round: </span>
+                  {uni.round}
+                </div>
+              )}
               {uni.deadline_date && (
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span>Deadline: {new Date(uni.deadline_date).toLocaleDateString()}</span>
                 </div>
+              )}
+              {uni.firm_choice && (
+                <Badge variant="default" className="w-fit gap-1">
+                  <Shield className="w-3 h-3" /> Firm Choice
+                </Badge>
+              )}
+              {uni.insurance_choice && (
+                <Badge variant="secondary" className="w-fit gap-1">
+                  <Award className="w-3 h-3" /> Insurance
+                </Badge>
+              )}
+              {uni.matriculation_confirmed && (
+                <Badge variant="default" className="w-fit bg-green-600">Matriculated</Badge>
               )}
             </div>
 
@@ -162,6 +210,101 @@ const StudentUniversitiesTab = ({ studentId }: StudentUniversitiesTabProps) => {
                 <p className="text-sm text-muted-foreground">{uni.notes}</p>
               </div>
             )}
+
+            {/* Decisions & Outcomes expandable section */}
+            <div className="pt-3 border-t mt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-between"
+                onClick={() => setExpandedId(expandedId === uni.id ? null : uni.id)}
+              >
+                <span className="text-sm font-medium">Decisions & Outcomes</span>
+                {expandedId === uni.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </Button>
+
+              {expandedId === uni.id && (
+                <div className="mt-3 space-y-4 p-3 bg-muted/30 rounded-md">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Status</Label>
+                      <Select value={uni.status} onValueChange={(v) => updateField(uni.id, "status", v)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="researching">Researching</SelectItem>
+                          <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="submitted">Submitted</SelectItem>
+                          <SelectItem value="interview_scheduled">Interview Scheduled</SelectItem>
+                          <SelectItem value="offer_received">Offer Received</SelectItem>
+                          <SelectItem value="offer_accepted">Offer Accepted</SelectItem>
+                          <SelectItem value="waitlisted">Waitlisted</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="withdrawn">Withdrawn</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Offer Conditions</Label>
+                      <Input
+                        className="h-8 text-xs"
+                        placeholder="e.g., AAA at A-Level"
+                        defaultValue={uni.offer_conditions || ""}
+                        onBlur={(e) => updateField(uni.id, "offer_conditions", e.target.value || null)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Waitlist Plan</Label>
+                      <Select value={uni.waitlist_plan_status || ""} onValueChange={(v) => updateField(uni.id, "waitlist_plan_status", v || null)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="N/A" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="loci_planned">LOCI Planned</SelectItem>
+                          <SelectItem value="loci_sent">LOCI Sent</SelectItem>
+                          <SelectItem value="additional_materials">Additional Materials Sent</SelectItem>
+                          <SelectItem value="converted">Converted to Offer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Enrolment Intention</Label>
+                      <Select value={uni.enrolment_intention || ""} onValueChange={(v) => updateField(uni.id, "enrolment_intention", v || null)}>
+                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="N/A" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="likely">Likely</SelectItem>
+                          <SelectItem value="possible">Possible</SelectItem>
+                          <SelectItem value="unlikely">Unlikely</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="declined">Declined</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Switch checked={uni.firm_choice} onCheckedChange={(v) => updateField(uni.id, "firm_choice", v)} id={`firm-${uni.id}`} />
+                      <Label htmlFor={`firm-${uni.id}`} className="text-xs">Firm Choice</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={uni.insurance_choice} onCheckedChange={(v) => updateField(uni.id, "insurance_choice", v)} id={`ins-${uni.id}`} />
+                      <Label htmlFor={`ins-${uni.id}`} className="text-xs">Insurance</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={uni.clearing_shortlist} onCheckedChange={(v) => updateField(uni.id, "clearing_shortlist", v)} id={`clear-${uni.id}`} />
+                      <Label htmlFor={`clear-${uni.id}`} className="text-xs">Clearing</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={uni.matriculation_confirmed} onCheckedChange={(v) => updateField(uni.id, "matriculation_confirmed", v)} id={`mat-${uni.id}`} />
+                      <Label htmlFor={`mat-${uni.id}`} className="text-xs">Matriculated</Label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {uni.deadline_date && !uni.tasks_generated && (
               <div className="pt-3 border-t mt-3">
