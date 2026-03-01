@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EditStageDialog from "./EditStageDialog";
+import StudentTestScoresSection from "./StudentTestScoresSection";
 
 interface StudentProfileTabProps {
   student: any;
@@ -169,6 +170,9 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Test Scores */}
+      <StudentTestScoresSection studentId={student.id} />
 
       {/* Personal Information */}
       <Card>

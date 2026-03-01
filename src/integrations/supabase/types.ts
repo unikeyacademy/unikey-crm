@@ -811,6 +811,53 @@ export type Database = {
           },
         ]
       }
+      student_test_scores: {
+        Row: {
+          created_at: string
+          id: string
+          next_planned_date: string | null
+          notes: string | null
+          score: string
+          student_id: string
+          test_category: string
+          test_date: string | null
+          test_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          next_planned_date?: string | null
+          notes?: string | null
+          score: string
+          student_id: string
+          test_category: string
+          test_date?: string | null
+          test_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          next_planned_date?: string | null
+          notes?: string | null
+          score?: string
+          student_id?: string
+          test_category?: string
+          test_date?: string | null
+          test_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_test_scores_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_university_targets: {
         Row: {
           application_system: string | null
