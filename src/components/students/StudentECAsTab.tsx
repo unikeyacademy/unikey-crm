@@ -20,6 +20,12 @@ interface ECA {
   description: string | null;
   outcomes: string | null;
   lead_consultant_id: string | null;
+  role: string | null;
+  time_commitment: string | null;
+  impact: string | null;
+  awards: string | null;
+  primary_category: string | null;
+  link: string | null;
 }
 
 interface StudentECAsTabProps {
@@ -110,9 +116,11 @@ const StudentECAsTab = ({ studentId, studentName }: StudentECAsTabProps) => {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h4 className="font-semibold text-lg mb-1">{eca.eca_name}</h4>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                   <Badge variant="outline">{eca.eca_type}</Badge>
+                  {eca.primary_category && <Badge variant="secondary">{eca.primary_category}</Badge>}
                   {getStatusBadge(eca.status)}
+                  {eca.role && <span className="text-xs">Role: {eca.role}</span>}
                 </div>
               </div>
             </div>
@@ -156,6 +164,14 @@ const StudentECAsTab = ({ studentId, studentName }: StudentECAsTabProps) => {
                 <p className="text-sm text-muted-foreground">{eca.outcomes}</p>
               </div>
             )}
+
+            {/* Taxonomy extras */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              {eca.time_commitment && <div><span className="text-muted-foreground">Time: </span>{eca.time_commitment}</div>}
+              {eca.impact && <div><span className="text-muted-foreground">Impact: </span>{eca.impact}</div>}
+              {eca.awards && <div><span className="text-muted-foreground">Awards: </span>{eca.awards}</div>}
+              {eca.link && <div><a href={eca.link} target="_blank" rel="noopener noreferrer" className="text-primary underline">View Link</a></div>}
+            </div>
           </CardContent>
         </Card>
       ))}

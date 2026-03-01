@@ -28,6 +28,8 @@ const AddConsultationDialog = ({ studentId, onAdded }: AddConsultationDialogProp
     action_items: "",
     next_steps: "",
     meeting_link: "",
+    attendees: "",
+    key_decisions: "",
   });
 
   const handleGenerateMeetLink = async () => {
@@ -100,6 +102,8 @@ const AddConsultationDialog = ({ studentId, onAdded }: AddConsultationDialogProp
               : null,
             next_steps: formData.next_steps || null,
             meeting_link: formData.meeting_link || null,
+            attendees: formData.attendees ? formData.attendees.split(",").map(a => a.trim()) : null,
+            key_decisions: formData.key_decisions || null,
           },
         ])
         .select()
@@ -137,6 +141,8 @@ const AddConsultationDialog = ({ studentId, onAdded }: AddConsultationDialogProp
         action_items: "",
         next_steps: "",
         meeting_link: "",
+        attendees: "",
+        key_decisions: "",
       });
       onAdded();
     } catch (error: any) {
@@ -259,6 +265,27 @@ const AddConsultationDialog = ({ studentId, onAdded }: AddConsultationDialogProp
               placeholder="Planned next session topics, milestones..."
               value={formData.next_steps}
               onChange={(e) => setFormData({ ...formData, next_steps: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="attendees">Attendees (comma-separated)</Label>
+            <Input
+              id="attendees"
+              placeholder="e.g., Student, Parent, Co-consultant"
+              value={formData.attendees}
+              onChange={(e) => setFormData({ ...formData, attendees: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="key_decisions">Key Decisions</Label>
+            <Textarea
+              id="key_decisions"
+              rows={2}
+              placeholder="Important decisions made during this session..."
+              value={formData.key_decisions}
+              onChange={(e) => setFormData({ ...formData, key_decisions: e.target.value })}
             />
           </div>
 

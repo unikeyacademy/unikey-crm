@@ -237,6 +237,7 @@ export type Database = {
       consultations: {
         Row: {
           action_items: string[] | null
+          attendees: string[] | null
           consultant_id: string
           consultation_date: string
           consultation_type: string
@@ -244,6 +245,7 @@ export type Database = {
           duration_minutes: number | null
           google_calendar_event_id: string | null
           id: string
+          key_decisions: string | null
           meeting_link: string | null
           next_steps: string | null
           notes: string | null
@@ -253,6 +255,7 @@ export type Database = {
         }
         Insert: {
           action_items?: string[] | null
+          attendees?: string[] | null
           consultant_id: string
           consultation_date: string
           consultation_type: string
@@ -260,6 +263,7 @@ export type Database = {
           duration_minutes?: number | null
           google_calendar_event_id?: string | null
           id?: string
+          key_decisions?: string | null
           meeting_link?: string | null
           next_steps?: string | null
           notes?: string | null
@@ -269,6 +273,7 @@ export type Database = {
         }
         Update: {
           action_items?: string[] | null
+          attendees?: string[] | null
           consultant_id?: string
           consultation_date?: string
           consultation_type?: string
@@ -276,6 +281,7 @@ export type Database = {
           duration_minutes?: number | null
           google_calendar_event_id?: string | null
           id?: string
+          key_decisions?: string | null
           meeting_link?: string | null
           next_steps?: string | null
           notes?: string | null
@@ -605,6 +611,69 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          invoice_ref: string | null
+          notes: string | null
+          package_id: string
+          payment_date: string
+          payment_method: string | null
+          payment_type: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_ref?: string | null
+          notes?: string | null
+          package_id: string
+          payment_date?: string
+          payment_method?: string | null
+          payment_type?: string
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          invoice_ref?: string | null
+          notes?: string | null
+          package_id?: string
+          payment_date?: string
+          payment_method?: string | null
+          payment_type?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "student_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -751,6 +820,7 @@ export type Database = {
       }
       student_ecas: {
         Row: {
+          awards: string | null
           completion_percentage: number | null
           created_at: string
           description: string | null
@@ -758,16 +828,24 @@ export type Database = {
           eca_type: string
           end_date: string | null
           id: string
+          impact: string | null
           lead_consultant_id: string | null
+          link: string | null
           milestones: Json | null
           objectives: string | null
           outcomes: string | null
+          primary_category: string | null
+          reference_mentor: string | null
+          role: string | null
+          secondary_category: string | null
           start_date: string | null
           status: string | null
           student_id: string
+          time_commitment: string | null
           updated_at: string
         }
         Insert: {
+          awards?: string | null
           completion_percentage?: number | null
           created_at?: string
           description?: string | null
@@ -775,16 +853,24 @@ export type Database = {
           eca_type: string
           end_date?: string | null
           id?: string
+          impact?: string | null
           lead_consultant_id?: string | null
+          link?: string | null
           milestones?: Json | null
           objectives?: string | null
           outcomes?: string | null
+          primary_category?: string | null
+          reference_mentor?: string | null
+          role?: string | null
+          secondary_category?: string | null
           start_date?: string | null
           status?: string | null
           student_id: string
+          time_commitment?: string | null
           updated_at?: string
         }
         Update: {
+          awards?: string | null
           completion_percentage?: number | null
           created_at?: string
           description?: string | null
@@ -792,13 +878,20 @@ export type Database = {
           eca_type?: string
           end_date?: string | null
           id?: string
+          impact?: string | null
           lead_consultant_id?: string | null
+          link?: string | null
           milestones?: Json | null
           objectives?: string | null
           outcomes?: string | null
+          primary_category?: string | null
+          reference_mentor?: string | null
+          role?: string | null
+          secondary_category?: string | null
           start_date?: string | null
           status?: string | null
           student_id?: string
+          time_commitment?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -927,6 +1020,62 @@ export type Database = {
             columns: ["university_target_id"]
             isOneToOne: false
             referencedRelation: "student_university_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_packages: {
+        Row: {
+          contract_type: string | null
+          created_at: string
+          currency: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          package_name: string
+          package_type: string
+          price: number
+          start_date: string | null
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          contract_type?: string | null
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          package_name: string
+          package_type: string
+          price?: number
+          start_date?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          contract_type?: string | null
+          created_at?: string
+          currency?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          package_name?: string
+          package_type?: string
+          price?: number
+          start_date?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_packages_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
