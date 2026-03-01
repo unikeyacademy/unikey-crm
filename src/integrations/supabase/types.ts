@@ -234,6 +234,57 @@ export type Database = {
         }
         Relationships: []
       }
+      co_consultant_hours: {
+        Row: {
+          consultant_id: string
+          created_at: string
+          description: string | null
+          hourly_rate: number
+          hours: number
+          id: string
+          student_id: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          consultant_id: string
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number
+          hours: number
+          id?: string
+          student_id: string
+          updated_at?: string
+          work_date?: string
+        }
+        Update: {
+          consultant_id?: string
+          created_at?: string
+          description?: string | null
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          student_id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "co_consultant_hours_consultant_id_fkey"
+            columns: ["consultant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "co_consultant_hours_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultations: {
         Row: {
           action_items: string[] | null

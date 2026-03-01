@@ -47,6 +47,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { name: "Email Templates", href: "/email-templates", icon: Mail },
     { name: "Email Automation", href: "/email-automation", icon: Zap },
     { name: "Requests", href: "/requests", icon: MessageSquare },
+    { name: "Co-Consultants", href: "/co-consultants", icon: Users },
     { name: "Settings", href: "/settings", icon: SettingsIcon },
   ];
 
