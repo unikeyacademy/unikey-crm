@@ -26,6 +26,13 @@ const AddECADialog = ({ studentId, onAdded }: AddECADialogProps) => {
     description: "",
     objectives: "",
     completion_percentage: "0",
+    role: "",
+    time_commitment: "",
+    impact: "",
+    awards: "",
+    reference_mentor: "",
+    link: "",
+    primary_category: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +55,13 @@ const AddECADialog = ({ studentId, onAdded }: AddECADialogProps) => {
           objectives: formData.objectives || null,
           completion_percentage: parseInt(formData.completion_percentage),
           lead_consultant_id: user.id,
+          role: formData.role || null,
+          time_commitment: formData.time_commitment || null,
+          impact: formData.impact || null,
+          awards: formData.awards || null,
+          reference_mentor: formData.reference_mentor || null,
+          link: formData.link || null,
+          primary_category: formData.primary_category || null,
         },
       ]);
 
@@ -64,6 +78,13 @@ const AddECADialog = ({ studentId, onAdded }: AddECADialogProps) => {
         description: "",
         objectives: "",
         completion_percentage: "0",
+        role: "",
+        time_commitment: "",
+        impact: "",
+        awards: "",
+        reference_mentor: "",
+        link: "",
+        primary_category: "",
       });
       onAdded();
     } catch (error: any) {
@@ -108,7 +129,7 @@ const AddECADialog = ({ studentId, onAdded }: AddECADialogProps) => {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Pre-College Course">Pre-College Course</SelectItem>
+                 <SelectItem value="Pre-College Course">Pre-College Course</SelectItem>
                   <SelectItem value="Competition">Competition</SelectItem>
                   <SelectItem value="Passion Project">Passion Project</SelectItem>
                   <SelectItem value="Research Experience">Research Experience</SelectItem>
@@ -117,6 +138,8 @@ const AddECADialog = ({ studentId, onAdded }: AddECADialogProps) => {
                   <SelectItem value="Leadership Role">Leadership Role</SelectItem>
                   <SelectItem value="Publication">Publication</SelectItem>
                   <SelectItem value="Conference">Conference Presentation</SelectItem>
+                  <SelectItem value="Sport">Sport</SelectItem>
+                  <SelectItem value="Arts">Arts / Creative</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -193,6 +216,60 @@ const AddECADialog = ({ studentId, onAdded }: AddECADialogProps) => {
               onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
               placeholder="What are the goals and learning outcomes?"
             />
+          </div>
+
+          {/* New taxonomy fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Role / Position</Label>
+              <Input value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} placeholder="e.g., Team Lead, Researcher" />
+            </div>
+            <div className="space-y-2">
+              <Label>Time Commitment</Label>
+              <Input value={formData.time_commitment} onChange={e => setFormData({ ...formData, time_commitment: e.target.value })} placeholder="e.g., 10 hrs/week for 6 months" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Measurable Impact</Label>
+              <Input value={formData.impact} onChange={e => setFormData({ ...formData, impact: e.target.value })} placeholder="e.g., Raised $5,000, Published 2 papers" />
+            </div>
+            <div className="space-y-2">
+              <Label>Awards / Recognition</Label>
+              <Input value={formData.awards} onChange={e => setFormData({ ...formData, awards: e.target.value })} placeholder="e.g., Gold Medal, Finalist" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Reference / Mentor</Label>
+              <Input value={formData.reference_mentor} onChange={e => setFormData({ ...formData, reference_mentor: e.target.value })} placeholder="Name and contact" />
+            </div>
+            <div className="space-y-2">
+              <Label>Link / URL</Label>
+              <Input type="url" value={formData.link} onChange={e => setFormData({ ...formData, link: e.target.value })} placeholder="https://..." />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Primary Category</Label>
+            <Select value={formData.primary_category} onValueChange={v => setFormData({ ...formData, primary_category: v })}>
+              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Academic Enrichment">Academic Enrichment</SelectItem>
+                <SelectItem value="Research & Innovation">Research & Innovation</SelectItem>
+                <SelectItem value="Leadership & Governance">Leadership & Governance</SelectItem>
+                <SelectItem value="Community Service">Community Service</SelectItem>
+                <SelectItem value="Entrepreneurship">Entrepreneurship</SelectItem>
+                <SelectItem value="Arts & Culture">Arts & Culture</SelectItem>
+                <SelectItem value="Athletics">Athletics</SelectItem>
+                <SelectItem value="STEM">STEM</SelectItem>
+                <SelectItem value="Media & Communication">Media & Communication</SelectItem>
+                <SelectItem value="Social Impact">Social Impact</SelectItem>
+                <SelectItem value="Professional Development">Professional Development</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

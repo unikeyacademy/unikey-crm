@@ -18,6 +18,8 @@ interface Consultation {
   next_steps: string | null;
   meeting_link: string | null;
   consultant_id: string;
+  attendees: string[] | null;
+  key_decisions: string | null;
 }
 
 interface StudentConsultationsTabProps {
@@ -135,6 +137,24 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
                   <div>
                     <p className="text-sm font-medium mb-2">Next Steps</p>
                     <p className="text-sm">{consultation.next_steps}</p>
+                  </div>
+                )}
+
+                {consultation.attendees && consultation.attendees.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Attendees</p>
+                    <div className="flex flex-wrap gap-1">
+                      {consultation.attendees.map((a, i) => (
+                        <Badge key={i} variant="outline" className="text-xs">{a}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {consultation.key_decisions && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">Key Decisions</p>
+                    <p className="text-sm">{consultation.key_decisions}</p>
                   </div>
                 )}
 

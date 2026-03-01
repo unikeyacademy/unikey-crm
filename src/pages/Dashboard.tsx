@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, CheckCircle, AlertCircle, Calendar, Eye, Clock } from "lucide-react";
+import { Users, CheckCircle, AlertCircle, Calendar, Eye, Clock, AlertTriangle, ShieldAlert, TrendingUp } from "lucide-react";
 
 interface DashboardStats {
   totalStudents: number;
@@ -33,6 +33,13 @@ interface UpcomingTask {
   } | null;
 }
 
+interface StudentAlert {
+  studentId: string;
+  studentName: string;
+  alerts: string[];
+  health: "red" | "yellow" | "green";
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
@@ -43,6 +50,7 @@ const Dashboard = () => {
   });
   const [recentStudents, setRecentStudents] = useState<RecentStudent[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<UpcomingTask[]>([]);
+  const [studentAlerts, setStudentAlerts] = useState<StudentAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -96,19 +104,16 @@ const Dashboard = () => {
       // Fetch upcoming tasks
       const { data: tasksData } = await supabase
         .from("tasks")
-        .select(`
-          id,
-          title,
-          due_date,
-          priority,
-          students (first_name, last_name)
-        `)
+        .select(`id, title, due_date, priority, students (first_name, last_name)`)
         .neq("status", "completed")
         .not("due_date", "is", null)
         .order("due_date", { ascending: true })
         .limit(5);
 
       setUpcomingTasks(tasksData || []);
+
+      // === STEP 8: System Health & Alerts ===
+      await computeStudentAlerts(now);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -116,44 +121,145 @@ const Dashboard = () => {
     }
   };
 
+  const computeStudentAlerts = async (now: Date) => {
+    try {
+      const { data: students } = await supabase
+        .from("students")
+        .select("id, first_name, last_name")
+        .eq("status", "active");
+
+      if (!students || students.length === 0) return;
+
+      const studentIds = students.map(s => s.id);
+
+      // Fetch last consultation per student
+      const { data: consultations } = await supabase
+        .from("consultations")
+        .select("student_id, consultation_date")
+        .in("student_id", studentIds)
+        .order("consultation_date", { ascending: false });
+
+      // Fetch overdue tasks per student
+      const { data: overdueTasks } = await supabase
+        .from("tasks")
+        .select("student_id")
+        .in("student_id", studentIds)
+        .lt("due_date", now.toISOString())
+        .neq("status", "completed");
+
+      // Fetch approaching deadlines (next 14 days)
+      const twoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const { data: approachingDeadlines } = await supabase
+        .from("student_university_targets")
+        .select("student_id, university_name, deadline_date")
+        .in("student_id", studentIds)
+        .gte("deadline_date", now.toISOString().split("T")[0])
+        .lte("deadline_date", twoWeeks.toISOString().split("T")[0]);
+
+      // Build last consultation map
+      const lastConsultationMap = new Map<string, Date>();
+      consultations?.forEach(c => {
+        if (!lastConsultationMap.has(c.student_id)) {
+          lastConsultationMap.set(c.student_id, new Date(c.consultation_date));
+        }
+      });
+
+      // Overdue count per student
+      const overdueMap = new Map<string, number>();
+      overdueTasks?.forEach(t => {
+        if (t.student_id) overdueMap.set(t.student_id, (overdueMap.get(t.student_id) || 0) + 1);
+      });
+
+      // Approaching deadlines per student
+      const deadlineMap = new Map<string, string[]>();
+      approachingDeadlines?.forEach(d => {
+        const arr = deadlineMap.get(d.student_id) || [];
+        arr.push(`${d.university_name} (${new Date(d.deadline_date!).toLocaleDateString()})`);
+        deadlineMap.set(d.student_id, arr);
+      });
+
+      const alerts: StudentAlert[] = [];
+
+      students.forEach(s => {
+        const studentAlerts: string[] = [];
+        let worstLevel: "green" | "yellow" | "red" = "green";
+
+        // Check days since last meeting
+        const lastMeeting = lastConsultationMap.get(s.id);
+        if (!lastMeeting) {
+          studentAlerts.push("No consultations recorded");
+          worstLevel = "yellow";
+        } else {
+          const daysSince = Math.floor((now.getTime() - lastMeeting.getTime()) / (1000 * 60 * 60 * 24));
+          if (daysSince > 30) {
+            studentAlerts.push(`${daysSince} days since last meeting`);
+            worstLevel = "red";
+          } else if (daysSince > 14) {
+            studentAlerts.push(`${daysSince} days since last meeting`);
+            worstLevel = worstLevel === "green" ? "yellow" : worstLevel;
+          }
+        }
+
+        // Check overdue items
+        const overdueCount = overdueMap.get(s.id) || 0;
+        if (overdueCount > 0) {
+          studentAlerts.push(`${overdueCount} overdue task${overdueCount > 1 ? "s" : ""}`);
+          worstLevel = "red";
+        }
+
+        // Check approaching deadlines
+        const deadlines = deadlineMap.get(s.id) || [];
+        if (deadlines.length > 0) {
+          studentAlerts.push(`${deadlines.length} deadline${deadlines.length > 1 ? "s" : ""} in next 14 days`);
+          worstLevel = worstLevel === "green" ? "yellow" : worstLevel;
+        }
+
+        if (studentAlerts.length > 0) {
+          alerts.push({
+            studentId: s.id,
+            studentName: `${s.first_name} ${s.last_name}`,
+            alerts: studentAlerts,
+            health: worstLevel,
+          });
+        }
+      });
+
+      // Sort: red first, then yellow
+      alerts.sort((a, b) => {
+        const order = { red: 0, yellow: 1, green: 2 };
+        return order[a.health] - order[b.health];
+      });
+
+      setStudentAlerts(alerts);
+    } catch (error) {
+      console.error("Error computing alerts:", error);
+    }
+  };
+
   const statCards = [
-    {
-      title: "Active Students",
-      value: stats.totalStudents,
-      icon: Users,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
-    },
-    {
-      title: "Active Tasks",
-      value: stats.activeTasks,
-      icon: CheckCircle,
-      color: "text-info",
-      bgColor: "bg-info/10",
-    },
-    {
-      title: "Upcoming Consultations",
-      value: stats.upcomingConsultations,
-      icon: Calendar,
-      color: "text-accent",
-      bgColor: "bg-accent/10",
-    },
-    {
-      title: "Overdue Items",
-      value: stats.overdueItems,
-      icon: AlertCircle,
-      color: "text-destructive",
-      bgColor: "bg-destructive/10",
-    },
+    { title: "Active Students", value: stats.totalStudents, icon: Users, color: "text-primary", bgColor: "bg-primary/10" },
+    { title: "Active Tasks", value: stats.activeTasks, icon: CheckCircle, color: "text-info", bgColor: "bg-info/10" },
+    { title: "Upcoming Consultations", value: stats.upcomingConsultations, icon: Calendar, color: "text-accent", bgColor: "bg-accent/10" },
+    { title: "Overdue Items", value: stats.overdueItems, icon: AlertCircle, color: "text-destructive", bgColor: "bg-destructive/10" },
   ];
+
+  const healthIcon = (health: "red" | "yellow" | "green") => {
+    if (health === "red") return <ShieldAlert className="w-4 h-4 text-destructive" />;
+    if (health === "yellow") return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+    return <TrendingUp className="w-4 h-4 text-green-500" />;
+  };
+
+  const healthBadge = (health: "red" | "yellow" | "green") => {
+    if (health === "red") return <Badge variant="destructive">At Risk</Badge>;
+    if (health === "yellow") return <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-500">Needs Attention</Badge>;
+    return <Badge variant="secondary">Healthy</Badge>;
+  };
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to UNIKEY Academy CRM
-        </p>
+        <p className="text-muted-foreground">Welcome to UNIKEY Academy CRM</p>
       </div>
 
       {/* Stats Grid */}
@@ -163,22 +269,50 @@ const Dashboard = () => {
           return (
             <Card key={stat.title}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
                 <div className={`w-10 h-10 rounded-full ${stat.bgColor} flex items-center justify-center`}>
                   <Icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">
-                  {loading ? "-" : stat.value}
-                </div>
+                <div className="text-3xl font-bold">{loading ? "-" : stat.value}</div>
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {/* System Health & Alerts */}
+      {studentAlerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5" />
+              System Health & Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {studentAlerts.slice(0, 10).map((alert) => (
+                <div
+                  key={alert.studentId}
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => navigate(`/students/${alert.studentId}`)}
+                >
+                  <div className="flex items-center gap-3">
+                    {healthIcon(alert.health)}
+                    <div>
+                      <p className="font-medium">{alert.studentName}</p>
+                      <p className="text-xs text-muted-foreground">{alert.alerts.join(" • ")}</p>
+                    </div>
+                  </div>
+                  {healthBadge(alert.health)}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Activity Section */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -191,9 +325,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             {recentStudents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No students yet. Add your first student to get started.
-              </p>
+              <p className="text-sm text-muted-foreground">No students yet. Add your first student to get started.</p>
             ) : (
               <div className="space-y-3">
                 {recentStudents.map((student) => (
@@ -203,16 +335,10 @@ const Dashboard = () => {
                     onClick={() => navigate(`/students/${student.id}`)}
                   >
                     <div className="flex-1">
-                      <p className="font-medium">
-                        {student.first_name} {student.last_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.current_stage} • Cycle {student.application_cycle}
-                      </p>
+                      <p className="font-medium">{student.first_name} {student.last_name}</p>
+                      <p className="text-sm text-muted-foreground">{student.current_stage} • Cycle {student.application_cycle}</p>
                     </div>
-                    <Button size="sm" variant="ghost">
-                      <Eye className="w-4 h-4" />
-                    </Button>
+                    <Button size="sm" variant="ghost"><Eye className="w-4 h-4" /></Button>
                   </div>
                 ))}
               </div>
@@ -229,40 +355,21 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             {upcomingTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No upcoming tasks. Create tasks to stay organized.
-              </p>
+              <p className="text-sm text-muted-foreground">No upcoming tasks. Create tasks to stay organized.</p>
             ) : (
               <div className="space-y-3">
                 {upcomingTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-start justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
+                  <div key={task.id} className="flex items-start justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex-1">
                       <p className="font-medium">{task.title}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm text-muted-foreground">
-                          Due: {new Date(task.due_date).toLocaleDateString()}
-                        </p>
+                        <p className="text-sm text-muted-foreground">Due: {new Date(task.due_date).toLocaleDateString()}</p>
                         {task.students && (
-                          <p className="text-sm text-muted-foreground">
-                            • {task.students.first_name} {task.students.last_name}
-                          </p>
+                          <p className="text-sm text-muted-foreground">• {task.students.first_name} {task.students.last_name}</p>
                         )}
                       </div>
                     </div>
-                    <Badge
-                      variant={
-                        task.priority === "high"
-                          ? "destructive"
-                          : task.priority === "medium"
-                          ? "default"
-                          : "secondary"
-                      }
-                    >
-                      {task.priority}
-                    </Badge>
+                    <Badge variant={task.priority === "high" ? "destructive" : task.priority === "medium" ? "default" : "secondary"}>{task.priority}</Badge>
                   </div>
                 ))}
               </div>
