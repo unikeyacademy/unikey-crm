@@ -17,6 +17,7 @@ import ECADatabase from "./pages/ECADatabase";
 import ECADiscovery from "./pages/ECADiscovery";
 import GoogleCallbackPage from "./pages/GoogleCallbackPage";
 import Settings from "./pages/Settings";
+import CoConsultants from "./pages/CoConsultants";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
@@ -138,6 +139,16 @@ const App = () => (
               <ProtectedRoute>
                 <DashboardLayout>
                   <ECADiscovery />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/co-consultants"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <CoConsultants />
                 </DashboardLayout>
               </ProtectedRoute>
             }

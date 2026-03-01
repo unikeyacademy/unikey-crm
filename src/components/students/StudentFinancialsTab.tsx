@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, DollarSign, Package, CreditCard } from "lucide-react";
+import { Plus, DollarSign, Package, CreditCard, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 interface StudentPackage {
@@ -42,9 +42,20 @@ interface StudentFinancialsTabProps {
   studentId: string;
 }
 
+interface CoConsultantHour {
+  id: string;
+  consultant_id: string;
+  work_date: string;
+  hours: number;
+  hourly_rate: number;
+  description: string | null;
+  profiles: { full_name: string | null; email: string } | null;
+}
+
 const StudentFinancialsTab = ({ studentId }: StudentFinancialsTabProps) => {
   const [packages, setPackages] = useState<StudentPackage[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [coHours, setCoHours] = useState<CoConsultantHour[]>([]);
   const [loading, setLoading] = useState(true);
   const [addPkgOpen, setAddPkgOpen] = useState(false);
   const [addPayOpen, setAddPayOpen] = useState(false);
@@ -56,14 +67,16 @@ const StudentFinancialsTab = ({ studentId }: StudentFinancialsTabProps) => {
 
   const fetchData = async () => {
     try {
-      const [pkgRes, payRes] = await Promise.all([
+      const [pkgRes, payRes, hoursRes] = await Promise.all([
         supabase.from("student_packages").select("*").eq("student_id", studentId).order("created_at", { ascending: false }),
         supabase.from("payments").select("*").eq("student_id", studentId).order("payment_date", { ascending: false }),
+        supabase.from("co_consultant_hours").select("*, profiles(full_name, email)").eq("student_id", studentId).order("work_date", { ascending: false }),
       ]);
       if (pkgRes.error) throw pkgRes.error;
       if (payRes.error) throw payRes.error;
       setPackages(pkgRes.data || []);
       setPayments(payRes.data || []);
+      setCoHours((hoursRes.data as any[]) || []);
     } catch (e: any) {
       toast.error("Error loading financial data");
     } finally {
@@ -294,6 +307,42 @@ const StudentFinancialsTab = ({ studentId }: StudentFinancialsTabProps) => {
                     <TableCell>{pay.payment_method || "—"}</TableCell>
                     <TableCell>{pay.invoice_ref || "—"}</TableCell>
                     <TableCell><Badge variant={pay.status === "paid" ? "default" : pay.status === "overdue" ? "destructive" : "secondary"}>{pay.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      {/* Co-Consultant Hours */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2"><Clock className="w-5 h-5" /> Co-Consultant Hours</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {coHours.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No co-consultant hours logged for this student.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Consultant</TableHead>
+                  <TableHead>Hours</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Description</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {coHours.map(h => (
+                  <TableRow key={h.id}>
+                    <TableCell>{new Date(h.work_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{h.profiles?.full_name || h.profiles?.email || "—"}</TableCell>
+                    <TableCell>{Number(h.hours).toFixed(2)}</TableCell>
+                    <TableCell>${Number(h.hourly_rate).toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">${(Number(h.hours) * Number(h.hourly_rate)).toFixed(2)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{h.description || "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
