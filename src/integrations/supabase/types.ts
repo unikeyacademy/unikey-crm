@@ -981,48 +981,72 @@ export type Database = {
       student_university_targets: {
         Row: {
           application_system: string | null
+          clearing_shortlist: boolean | null
           country: string | null
           created_at: string
           deadline_date: string | null
+          enrolment_intention: string | null
+          firm_choice: boolean | null
           id: string
+          insurance_choice: boolean | null
+          matriculation_confirmed: boolean | null
           notes: string | null
+          offer_conditions: string | null
           priority: string | null
           program: string | null
+          round: string | null
           status: string | null
           student_id: string
           tasks_generated: boolean | null
           university_name: string
           updated_at: string
+          waitlist_plan_status: string | null
         }
         Insert: {
           application_system?: string | null
+          clearing_shortlist?: boolean | null
           country?: string | null
           created_at?: string
           deadline_date?: string | null
+          enrolment_intention?: string | null
+          firm_choice?: boolean | null
           id?: string
+          insurance_choice?: boolean | null
+          matriculation_confirmed?: boolean | null
           notes?: string | null
+          offer_conditions?: string | null
           priority?: string | null
           program?: string | null
+          round?: string | null
           status?: string | null
           student_id: string
           tasks_generated?: boolean | null
           university_name: string
           updated_at?: string
+          waitlist_plan_status?: string | null
         }
         Update: {
           application_system?: string | null
+          clearing_shortlist?: boolean | null
           country?: string | null
           created_at?: string
           deadline_date?: string | null
+          enrolment_intention?: string | null
+          firm_choice?: boolean | null
           id?: string
+          insurance_choice?: boolean | null
+          matriculation_confirmed?: boolean | null
           notes?: string | null
+          offer_conditions?: string | null
           priority?: string | null
           program?: string | null
+          round?: string | null
           status?: string | null
           student_id?: string
           tasks_generated?: boolean | null
           university_name?: string
           updated_at?: string
+          waitlist_plan_status?: string | null
         }
         Relationships: [
           {
