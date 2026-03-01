@@ -11,7 +11,8 @@ import { toast } from "sonner";
 interface LogHoursDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  consultantId?: string;
+  consultantProfileId?: string;
+  defaultHourlyRate?: number;
   onSuccess: () => void;
 }
 
@@ -22,44 +23,56 @@ interface Student {
   student_id: string;
 }
 
-const LogHoursDialog = ({ open, onOpenChange, consultantId, onSuccess }: LogHoursDialogProps) => {
+interface CoConsultantOption {
+  id: string;
+  full_name: string;
+  default_hourly_rate: number;
+}
+
+const LogHoursDialog = ({ open, onOpenChange, consultantProfileId, defaultHourlyRate, onSuccess }: LogHoursDialogProps) => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [consultants, setConsultants] = useState<{ id: string; full_name: string; email: string }[]>([]);
+  const [coConsultants, setCoConsultants] = useState<CoConsultantOption[]>([]);
   const [form, setForm] = useState({
-    consultant_id: consultantId || "",
+    co_consultant_profile_id: consultantProfileId || "",
     student_id: "",
     work_date: new Date().toISOString().split("T")[0],
     hours: "",
-    hourly_rate: "",
+    hourly_rate: defaultHourlyRate?.toString() || "",
     description: "",
   });
 
   useEffect(() => {
     if (open) {
       fetchStudents();
-      if (!consultantId) fetchConsultants();
+      if (!consultantProfileId) fetchCoConsultants();
     }
   }, [open]);
 
   useEffect(() => {
-    if (consultantId) setForm(f => ({ ...f, consultant_id: consultantId }));
-  }, [consultantId]);
+    if (consultantProfileId) setForm(f => ({ ...f, co_consultant_profile_id: consultantProfileId, hourly_rate: defaultHourlyRate?.toString() || f.hourly_rate }));
+  }, [consultantProfileId, defaultHourlyRate]);
 
   const fetchStudents = async () => {
     const { data } = await supabase.from("students").select("id, first_name, last_name, student_id").eq("status", "active").order("first_name");
     setStudents(data || []);
   };
 
-  const fetchConsultants = async () => {
-    const { data } = await supabase.from("profiles").select("id, full_name, email");
-    setConsultants(data || []);
+  const fetchCoConsultants = async () => {
+    const { data } = await supabase.from("co_consultant_profiles").select("id, full_name, default_hourly_rate").eq("is_active", true).order("full_name");
+    setCoConsultants((data as any[]) || []);
+  };
+
+  const handleConsultantChange = (id: string) => {
+    const cc = coConsultants.find(c => c.id === id);
+    setForm(f => ({ ...f, co_consultant_profile_id: id, hourly_rate: cc ? cc.default_hourly_rate.toString() : f.hourly_rate }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { error } = await supabase.from("co_consultant_hours").insert([{
-        consultant_id: form.consultant_id,
+        consultant_id: (await supabase.auth.getUser()).data.user?.id || "",
+        co_consultant_profile_id: form.co_consultant_profile_id,
         student_id: form.student_id,
         work_date: form.work_date,
         hours: parseFloat(form.hours),
@@ -69,7 +82,7 @@ const LogHoursDialog = ({ open, onOpenChange, consultantId, onSuccess }: LogHour
       if (error) throw error;
       toast.success("Hours logged successfully!");
       onOpenChange(false);
-      setForm({ consultant_id: consultantId || "", student_id: "", work_date: new Date().toISOString().split("T")[0], hours: "", hourly_rate: "", description: "" });
+      setForm({ co_consultant_profile_id: consultantProfileId || "", student_id: "", work_date: new Date().toISOString().split("T")[0], hours: "", hourly_rate: defaultHourlyRate?.toString() || "", description: "" });
       onSuccess();
     } catch (e: any) {
       toast.error(e.message);
@@ -81,14 +94,14 @@ const LogHoursDialog = ({ open, onOpenChange, consultantId, onSuccess }: LogHour
       <DialogContent>
         <DialogHeader><DialogTitle>Log Co-Consultant Hours</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!consultantId && (
+          {!consultantProfileId && (
             <div className="space-y-2">
               <Label>Co-Consultant *</Label>
-              <Select value={form.consultant_id} onValueChange={v => setForm({ ...form, consultant_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Select consultant" /></SelectTrigger>
+              <Select value={form.co_consultant_profile_id} onValueChange={handleConsultantChange}>
+                <SelectTrigger><SelectValue placeholder="Select co-consultant" /></SelectTrigger>
                 <SelectContent>
-                  {consultants.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.full_name || c.email}</SelectItem>
+                  {coConsultants.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.full_name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -113,7 +126,7 @@ const LogHoursDialog = ({ open, onOpenChange, consultantId, onSuccess }: LogHour
           <div className="space-y-2"><Label>Description</Label><Textarea rows={3} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="What was worked on?" /></div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={!form.consultant_id || !form.student_id || !form.hours}>Log Hours</Button>
+            <Button type="submit" disabled={!form.co_consultant_profile_id || !form.student_id || !form.hours}>Log Hours</Button>
           </div>
         </form>
       </DialogContent>

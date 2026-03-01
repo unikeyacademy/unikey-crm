@@ -47,7 +47,7 @@ const MonthlySummary = ({ consultantId, consultantName, month, onBack }: Monthly
     const { data, error } = await supabase
       .from("co_consultant_hours")
       .select("*, students(first_name, last_name, student_id)")
-      .eq("consultant_id", consultantId)
+      .eq("co_consultant_profile_id", consultantId)
       .gte("work_date", startDate)
       .lte("work_date", endDate)
       .order("work_date");

@@ -236,6 +236,7 @@ export type Database = {
       }
       co_consultant_hours: {
         Row: {
+          co_consultant_profile_id: string | null
           consultant_id: string
           created_at: string
           description: string | null
@@ -247,6 +248,7 @@ export type Database = {
           work_date: string
         }
         Insert: {
+          co_consultant_profile_id?: string | null
           consultant_id: string
           created_at?: string
           description?: string | null
@@ -258,6 +260,7 @@ export type Database = {
           work_date?: string
         }
         Update: {
+          co_consultant_profile_id?: string | null
           consultant_id?: string
           created_at?: string
           description?: string | null
@@ -269,6 +272,13 @@ export type Database = {
           work_date?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "co_consultant_hours_co_consultant_profile_id_fkey"
+            columns: ["co_consultant_profile_id"]
+            isOneToOne: false
+            referencedRelation: "co_consultant_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "co_consultant_hours_consultant_id_fkey"
             columns: ["consultant_id"]
@@ -284,6 +294,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      co_consultant_profiles: {
+        Row: {
+          bank_details: string | null
+          contract_end_date: string | null
+          contract_start_date: string | null
+          created_at: string
+          default_hourly_rate: number
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          specialisation: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_details?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          default_hourly_rate?: number
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          specialisation?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_details?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
+          created_at?: string
+          default_hourly_rate?: number
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          specialisation?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       consultations: {
         Row: {
