@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EditStageDialog from "./EditStageDialog";
@@ -9,6 +11,17 @@ interface StudentProfileTabProps {
 }
 
 const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
+  const [secondaryConsultantName, setSecondaryConsultantName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (student.secondary_consultant_id) {
+      supabase.from("profiles").select("full_name, email").eq("id", student.secondary_consultant_id).single()
+        .then(({ data }) => {
+          if (data) setSecondaryConsultantName(data.full_name || data.email);
+        });
+    }
+  }, [student.secondary_consultant_id]);
+
   return (
     <div className="space-y-6">
       {/* Current Stage Card */}
@@ -234,7 +247,7 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
       </Card>
 
       {/* Commercial & Ownership */}
-      {(student.lead_source || student.engagement_stage || student.quotation) && (
+      {(student.lead_source || student.engagement_stage || student.quotation || student.secondary_consultant_id) && (
         <Card>
           <CardHeader>
             <CardTitle>Commercial & Ownership</CardTitle>
@@ -257,6 +270,12 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
                 <div>
                   <p className="text-sm text-muted-foreground">Quotation</p>
                   <p className="font-medium">{student.quotation}</p>
+                </div>
+              )}
+              {secondaryConsultantName && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Co-Consultant</p>
+                  <p className="font-medium">{secondaryConsultantName}</p>
                 </div>
               )}
             </div>
