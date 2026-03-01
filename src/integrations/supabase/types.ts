@@ -811,6 +811,126 @@ export type Database = {
           },
         ]
       }
+      student_essays: {
+        Row: {
+          created_at: string
+          essay_region: string
+          essay_type: string
+          google_doc_link: string | null
+          id: string
+          last_updated_date: string | null
+          notes: string | null
+          owner: string | null
+          status: string
+          student_id: string
+          title: string | null
+          university_target_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          essay_region: string
+          essay_type: string
+          google_doc_link?: string | null
+          id?: string
+          last_updated_date?: string | null
+          notes?: string | null
+          owner?: string | null
+          status?: string
+          student_id: string
+          title?: string | null
+          university_target_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          essay_region?: string
+          essay_type?: string
+          google_doc_link?: string | null
+          id?: string
+          last_updated_date?: string | null
+          notes?: string | null
+          owner?: string | null
+          status?: string
+          student_id?: string
+          title?: string | null
+          university_target_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_essays_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_essays_university_target_id_fkey"
+            columns: ["university_target_id"]
+            isOneToOne: false
+            referencedRelation: "student_university_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_interviews: {
+        Row: {
+          created_at: string
+          id: string
+          interview_date: string | null
+          interview_type: string
+          post_interview_notes: string | null
+          prep_session_dates: string[] | null
+          student_id: string
+          tutor_names: string[] | null
+          university_name: string
+          university_target_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          interview_date?: string | null
+          interview_type: string
+          post_interview_notes?: string | null
+          prep_session_dates?: string[] | null
+          student_id: string
+          tutor_names?: string[] | null
+          university_name: string
+          university_target_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          interview_date?: string | null
+          interview_type?: string
+          post_interview_notes?: string | null
+          prep_session_dates?: string[] | null
+          student_id?: string
+          tutor_names?: string[] | null
+          university_name?: string
+          university_target_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_interviews_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_interviews_university_target_id_fkey"
+            columns: ["university_target_id"]
+            isOneToOne: false
+            referencedRelation: "student_university_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_test_scores: {
         Row: {
           created_at: string
