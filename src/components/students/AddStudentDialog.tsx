@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,13 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [subjects, setSubjects] = useState<SubjectChoice[]>([]);
   const [newSubject, setNewSubject] = useState({ subject: "", predicted_grade: "" });
+  const [consultants, setConsultants] = useState<{ id: string; full_name: string | null; email: string }[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      supabase.from("profiles").select("id, full_name, email").then(({ data }) => setConsultants(data || []));
+    }
+  }, [open]);
   const [formData, setFormData] = useState({
     student_id: "",
     first_name: "",
@@ -57,6 +64,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     current_gpa: "",
     academic_strengths: "",
     academic_weaknesses: "",
+    secondary_consultant_id: "",
   });
 
   const handleAddSubject = () => {
@@ -122,6 +130,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           current_gpa: formData.current_gpa || null,
           academic_strengths: formData.academic_strengths || null,
           academic_weaknesses: formData.academic_weaknesses || null,
+          secondary_consultant_id: formData.secondary_consultant_id || null,
         },
       ]);
 
@@ -163,6 +172,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
         current_gpa: "",
         academic_strengths: "",
         academic_weaknesses: "",
+        secondary_consultant_id: "",
       });
       if (onStudentAdded) onStudentAdded();
     } catch (error: any) {
@@ -549,8 +559,21 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                     <SelectItem value="Completed">Completed</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="secondary_consultant">Secondary Consultant (Co-Consultant)</Label>
+              <Select value={formData.secondary_consultant_id} onValueChange={(value) => setFormData({ ...formData, secondary_consultant_id: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select co-consultant" />
+                </SelectTrigger>
+                <SelectContent>
+                  {consultants.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.full_name || c.email}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           </div>
 
           {/* Parent Information */}
