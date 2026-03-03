@@ -1,56 +1,27 @@
 
 
-## Co-Consultant Management & Monthly Payment Summary
-
-### Understanding
-
-Co-consultants are external contractors assigned to student cases. They log hours per student, and at month-end the CRM produces a summary of hours worked per co-consultant across all students, ready for confirmation and payment.
+## Add Student Quick-Access List in Sidebar
 
 ### What to Build
 
-**1. New DB table: `co_consultant_hours`**
-- `id`, `consultant_id` (references profiles), `student_id` (references students), `work_date`, `hours` (numeric), `description`, `hourly_rate` (numeric), `created_at`, `updated_at`
-- RLS: authenticated can view, consultants/admins can insert/update, admins can delete
+Add a collapsible section in the sidebar, below the main navigation, that shows all **active students** by name. Clicking a student name navigates directly to their profile (`/students/:id`). This acts as a quick-access panel so you don't need to go to the Students page first.
 
-**2. New page: Co-Consultants (`/co-consultants`)**
-- Lists all users with the `consultant` role (from profiles table) who are assigned as `secondary_consultant_id` on any student
-- For each co-consultant: show name, email, total hours this month, total amount owed
-- Click into a co-consultant to see detailed breakdown by student
-- "Log Hours" dialog to record hours against a student
-- **Monthly Summary view**: select a month, see per-student hours + totals for a selected co-consultant, with a "Copy Summary" or "Export" action for sending to the co-consultant for confirmation
+### Design
 
-**3. Student detail integration**
-- On the existing student profile, show co-consultant hours logged for that student (small section or within the Financials tab)
-
-**4. Navigation update**
-- Add "Co-Consultants" to sidebar navigation
+- Below the main nav links, add a section header "Current Students" with a collapsible toggle
+- Fetch active students from the `students` table on mount
+- Display each student as a clickable sidebar link showing their preferred/first name + last name
+- Highlight the active student when viewing their profile
+- Show a small count badge next to the header (e.g., "Current Students (12)")
+- Scrollable if the list is long (max height with overflow)
 
 ### Technical Details
 
-**Database migration:**
-```sql
-CREATE TABLE public.co_consultant_hours (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  consultant_id uuid NOT NULL REFERENCES public.profiles(id),
-  student_id uuid NOT NULL REFERENCES public.students(id),
-  work_date date NOT NULL DEFAULT CURRENT_DATE,
-  hours numeric NOT NULL,
-  hourly_rate numeric NOT NULL DEFAULT 0,
-  description text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
--- RLS policies (same pattern as other tables)
--- updated_at trigger
-```
+**Modified file: `src/components/DashboardLayout.tsx`**
+- Add `useState` + `useEffect` to fetch students where `status = 'active'`, ordered by first name
+- Add a collapsible "Current Students" section after the nav links, using Radix Collapsible or simple toggle state
+- Each student entry is a `<Link to={/students/${id}}>` with active styling when `location.pathname` matches
+- Wrap the student list in a `ScrollArea` for overflow handling
 
-**New files:**
-- `src/pages/CoConsultants.tsx` -- main page with month picker, consultant list, summary generation
-- `src/components/co-consultants/LogHoursDialog.tsx` -- form to log hours
-- `src/components/co-consultants/MonthlySummary.tsx` -- monthly breakdown per consultant
-
-**Modified files:**
-- `src/App.tsx` -- add `/co-consultants` route
-- `src/components/DashboardLayout.tsx` -- add nav item
-- `src/components/students/StudentFinancialsTab.tsx` -- add co-consultant hours section
+No database changes needed — reads from the existing `students` table.
 
