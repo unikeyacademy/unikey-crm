@@ -1,27 +1,39 @@
 
 
-## Add Student Quick-Access List in Sidebar
+## Revert Sidebar Student List + Replace Students Page with Table View
 
-### What to Build
+### What to Change
 
-Add a collapsible section in the sidebar, below the main navigation, that shows all **active students** by name. Clicking a student name navigates directly to their profile (`/students/:id`). This acts as a quick-access panel so you don't need to go to the Students page first.
+1. **Revert `DashboardLayout.tsx`**: Remove the collapsible "Current Students" section (the `useState`/`useEffect` for students, the `Collapsible`/`ScrollArea` block, and the extra imports). The "Students" nav link at `/students` already exists and will serve as the entry point.
 
-### Design
+2. **Rewrite `Students.tsx`**: Replace the current card grid with a full-width table (using the existing `Table` components from `src/components/ui/table.tsx`). Each student gets one horizontal row with key profile columns:
+   - Name (preferred or first + last)
+   - Student ID
+   - Status (badge)
+   - Grade Level
+   - Current School
+   - Application Cycle
+   - Track (US/UK/Dual)
+   - Current Stage
+   - Email
+   - Phone
+   - "View" button linking to `/students/:id`
 
-- Below the main nav links, add a section header "Current Students" with a collapsible toggle
-- Fetch active students from the `students` table on mount
-- Display each student as a clickable sidebar link showing their preferred/first name + last name
-- Highlight the active student when viewing their profile
-- Show a small count badge next to the header (e.g., "Current Students (12)")
-- Scrollable if the list is long (max height with overflow)
+   Keep the existing search bar and Add Student button. Rows are clickable to navigate to the student detail page.
 
 ### Technical Details
 
-**Modified file: `src/components/DashboardLayout.tsx`**
-- Add `useState` + `useEffect` to fetch students where `status = 'active'`, ordered by first name
-- Add a collapsible "Current Students" section after the nav links, using Radix Collapsible or simple toggle state
-- Each student entry is a `<Link to={/students/${id}}>` with active styling when `location.pathname` matches
-- Wrap the student list in a `ScrollArea` for overflow handling
+**`DashboardLayout.tsx`**:
+- Remove `useState`, `useEffect` imports (keep `ReactNode`)
+- Remove `Badge`, `ScrollArea`, `Collapsible` imports
+- Remove `ChevronDown`, `ChevronRight`, `User` icon imports
+- Remove `students` state, `studentsOpen` state, and the `useEffect` fetch
+- Remove the entire "Current Students" collapsible block between `</nav>` and the Logout section
 
-No database changes needed — reads from the existing `students` table.
+**`Students.tsx`**:
+- Import `Table`, `TableHeader`, `TableBody`, `TableRow`, `TableHead`, `TableCell` from `@/components/ui/table`
+- Replace the card grid with a table layout
+- Add columns for the key fields listed above
+- Make each row clickable with `onClick={() => navigate(/students/${id})}`
+- Fetch additional fields (`current_stage`, `track`) that aren't currently selected
 
