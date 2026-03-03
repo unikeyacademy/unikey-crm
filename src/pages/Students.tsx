@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Mail, Phone, Eye } from "lucide-react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Search, Eye } from "lucide-react";
 import { toast } from "sonner";
 import AddStudentDialog from "@/components/students/AddStudentDialog";
 
@@ -22,6 +22,8 @@ interface Student {
   application_cycle: string | null;
   status: string;
   tags: string[] | null;
+  track: string | null;
+  current_stage: string | null;
 }
 
 const Students = () => {
@@ -38,7 +40,7 @@ const Students = () => {
     try {
       const { data, error } = await supabase
         .from("students")
-        .select("*")
+        .select("id, student_id, first_name, last_name, preferred_name, email, phone, grade_level, current_school, application_cycle, status, tags, track, current_stage")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -85,96 +87,77 @@ const Students = () => {
         />
       </div>
 
-      {/* Students Grid */}
+      {/* Students Table */}
       {loading ? (
         <div className="text-center py-12">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading students...</p>
         </div>
       ) : filteredStudents.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              {searchQuery
-                ? "No students found matching your search."
-                : "No students yet. Click 'Add Student' to get started."}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border bg-card p-12 text-center">
+          <p className="text-muted-foreground">
+            {searchQuery
+              ? "No students found matching your search."
+              : "No students yet. Click 'Add Student' to get started."}
+          </p>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredStudents.map((student) => (
-            <Card key={student.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      {student.preferred_name || student.first_name}{" "}
-                      {student.last_name}
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      ID: {student.student_id}
-                    </p>
-                  </div>
-                  <Badge
-                    variant={student.status === "active" ? "default" : "secondary"}
-                  >
-                    {student.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {student.grade_level && (
-                  <p className="text-sm">
-                    <span className="font-medium">Grade:</span> {student.grade_level}
-                  </p>
-                )}
-                {student.current_school && (
-                  <p className="text-sm">
-                    <span className="font-medium">School:</span>{" "}
-                    {student.current_school}
-                  </p>
-                )}
-                {student.application_cycle && (
-                  <p className="text-sm">
-                    <span className="font-medium">Cycle:</span>{" "}
-                    {student.application_cycle}
-                  </p>
-                )}
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className="gap-2"
-                    onClick={() => navigate(`/students/${student.id}`)}
-                  >
-                    <Eye className="w-3 h-3" />
-                    View Profile
-                  </Button>
-                  {student.email && (
+        <div className="rounded-lg border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Student ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Grade</TableHead>
+                <TableHead>School</TableHead>
+                <TableHead>Cycle</TableHead>
+                <TableHead>Track</TableHead>
+                <TableHead>Stage</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead className="w-[80px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredStudents.map((student) => (
+                <TableRow
+                  key={student.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/students/${student.id}`)}
+                >
+                  <TableCell className="font-medium">
+                    {student.preferred_name || student.first_name} {student.last_name}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{student.student_id}</TableCell>
+                  <TableCell>
+                    <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                      {student.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{student.grade_level ?? "—"}</TableCell>
+                  <TableCell>{student.current_school ?? "—"}</TableCell>
+                  <TableCell>{student.application_cycle ?? "—"}</TableCell>
+                  <TableCell>{student.track ?? "—"}</TableCell>
+                  <TableCell>{student.current_stage ?? "—"}</TableCell>
+                  <TableCell>{student.email ?? "—"}</TableCell>
+                  <TableCell>{student.phone ?? "—"}</TableCell>
+                  <TableCell>
                     <Button
                       size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => window.location.href = `mailto:${student.email}`}
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/students/${student.id}`);
+                      }}
                     >
-                      <Mail className="w-3 h-3" />
+                      <Eye className="w-4 h-4" />
                     </Button>
-                  )}
-                  {student.phone && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={() => window.location.href = `tel:${student.phone}`}
-                    >
-                      <Phone className="w-3 h-3" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
