@@ -54,6 +54,7 @@ interface Student {
   current_gpa: string | null;
   academic_strengths: string | null;
   academic_weaknesses: string | null;
+  google_drive_folder_url: string | null;
 }
 
 const StudentDetail = () => {
