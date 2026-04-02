@@ -59,6 +59,67 @@ function extractFolderId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+// Parse filename format: YYMMDD [Student Name] [Nature of Meeting] with [Consultant Name]
+function parseFilename(filename: string): { date: string | null; studentName: string | null; meetingType: string | null; consultantName: string | null } {
+  // Remove file extension
+  const name = filename.replace(/\.[^.]+$/, '').trim();
+  
+  // Match: YYMMDD followed by content, with "with" separating consultant
+  const match = name.match(/^(\d{6})\s+(.+?)\s+with\s+(.+)$/i);
+  if (!match) {
+    return { date: null, studentName: null, meetingType: null, consultantName: null };
+  }
+
+  const dateStr = match[1]; // YYMMDD
+  const middlePart = match[2].trim(); // "[Student Name] [Nature of Meeting]"
+  const consultantName = match[3].trim();
+
+  // Parse YYMMDD to ISO date
+  const yy = parseInt(dateStr.substring(0, 2));
+  const mm = parseInt(dateStr.substring(2, 4));
+  const dd = parseInt(dateStr.substring(4, 6));
+  const year = yy >= 50 ? 1900 + yy : 2000 + yy;
+  const date = `${year}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+
+  // Try to split middle part into student name and meeting type
+  // Common meeting types to look for
+  const meetingTypes = [
+    'Progress Review', 'Progress Report', 'Strategy Session', 'Application Review',
+    'Initial Consultation', 'Follow-up', 'Follow Up', 'Check-in', 'Check In',
+    'University Review', 'Essay Review', 'ECA Review', 'Interview Prep',
+    'Kickoff', 'Kick-off', 'Meeting', 'Session', 'Review', 'Consultation',
+    'Catch-up', 'Catch Up', 'Debrief', 'Planning', 'Brainstorm',
+  ];
+
+  let studentName = middlePart;
+  let meetingType: string | null = null;
+
+  // Try to find a known meeting type at the end of the middle part
+  for (const mt of meetingTypes) {
+    if (middlePart.toLowerCase().endsWith(mt.toLowerCase())) {
+      studentName = middlePart.substring(0, middlePart.length - mt.length).trim();
+      meetingType = mt;
+      break;
+    }
+  }
+
+  // If no known type found, try splitting on last space-separated word group
+  if (!meetingType) {
+    // Assume format is "FirstName LastName MeetingType" — take last 1-2 words as type
+    const words = middlePart.split(/\s+/);
+    if (words.length >= 3) {
+      // Try last 2 words as meeting type
+      meetingType = words.slice(-2).join(' ');
+      studentName = words.slice(0, -2).join(' ');
+    } else if (words.length === 2) {
+      meetingType = words[1];
+      studentName = words[0];
+    }
+  }
+
+  return { date, studentName, meetingType, consultantName };
+}
+
 async function exportGoogleDoc(fileId: string, accessToken: string): Promise<string> {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`,
@@ -172,9 +233,9 @@ serve(async (req) => {
 
     const accessToken = await getAccessToken(user.id, serviceClient);
 
-    // Search for progress reports in the folder
-    const searchQuery = `'${folderId}' in parents and trashed=false and (name contains 'Progress Report' or name contains 'progress report' or name contains 'Consultation' or name contains 'consultation')`;
-    const driveUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQuery)}&fields=files(id,name,mimeType,modifiedTime,webViewLink)&orderBy=modifiedTime desc&pageSize=50`;
+    // List all files in the folder (the filename pattern YYMMDD identifies reports)
+    const searchQuery = `'${folderId}' in parents and trashed=false`;
+    const driveUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQuery)}&fields=files(id,name,mimeType,modifiedTime,webViewLink)&orderBy=name desc&pageSize=100`;
 
     const driveResponse = await fetch(driveUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -186,11 +247,14 @@ serve(async (req) => {
     }
 
     const driveData = await driveResponse.json();
-    const files = driveData.files || [];
+    const allFiles = driveData.files || [];
+
+    // Filter files matching YYMMDD pattern at start of filename
+    const files = allFiles.filter((f: any) => /^\d{6}\s/.test(f.name));
 
     if (files.length === 0) {
       return new Response(
-        JSON.stringify({ message: 'No progress reports found in the Drive folder', imported: 0 }),
+        JSON.stringify({ message: 'No files matching the YYMMDD naming pattern found in the Drive folder', imported: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -216,6 +280,9 @@ serve(async (req) => {
 
     for (const file of newFiles.slice(0, 10)) { // Limit to 10 at a time
       try {
+        // Parse metadata from filename first
+        const filenameMeta = parseFilename(file.name);
+
         let content: string;
         if (file.mimeType === 'application/vnd.google-apps.document') {
           content = await exportGoogleDoc(file.id, accessToken);
@@ -225,21 +292,33 @@ serve(async (req) => {
 
         const parsed = await parseReportWithAI(content, file.name);
 
+        // Use filename metadata as primary source, AI-parsed as fallback
+        const consultationDate = filenameMeta.date 
+          ? `${filenameMeta.date}T00:00:00Z` 
+          : (parsed.consultation_date || file.modifiedTime);
+        
+        const consultationType = filenameMeta.meetingType || parsed.consultation_type || 'Progress Review';
+        
+        const attendees = [
+          ...(filenameMeta.consultantName ? [filenameMeta.consultantName] : []),
+          ...(parsed.attendees || []).filter((a: string) => a !== filenameMeta.consultantName),
+        ];
+
         // Insert as consultation
         const { error: insertError } = await supabase
           .from('consultations')
           .insert({
             student_id: studentId,
             consultant_id: user.id,
-            consultation_date: parsed.consultation_date || file.modifiedTime,
+            consultation_date: consultationDate,
             duration_minutes: parsed.duration_minutes,
-            consultation_type: parsed.consultation_type || 'Progress Review',
+            consultation_type: consultationType,
             topics_discussed: parsed.topics_discussed || [],
             notes: parsed.notes ? `${parsed.notes}${parsed.progress_summary ? '\n\nProgress Summary: ' + parsed.progress_summary : ''}` : null,
             action_items: parsed.action_items || [],
             next_steps: parsed.next_steps,
             key_decisions: parsed.key_decisions,
-            attendees: parsed.attendees || [],
+            attendees,
             meeting_link: file.webViewLink, // Store Drive link to prevent re-import
           });
 
@@ -247,7 +326,7 @@ serve(async (req) => {
           console.error(`Error inserting consultation for ${file.name}:`, insertError);
           results.push({ file: file.name, status: 'error', error: insertError.message });
         } else {
-          results.push({ file: file.name, status: 'imported' });
+          results.push({ file: file.name, status: 'imported', date: filenameMeta.date, type: consultationType });
         }
       } catch (fileError) {
         console.error(`Error processing ${file.name}:`, fileError);
