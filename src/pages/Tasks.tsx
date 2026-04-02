@@ -35,8 +35,9 @@ const Tasks = () => {
         .from("tasks")
         .select(`
           *,
-          students (first_name, last_name)
+          students!inner (first_name, last_name, application_cycle)
         `)
+        .neq("students.application_cycle", "2026")
         .order("due_date", { ascending: true });
 
       if (error) throw error;

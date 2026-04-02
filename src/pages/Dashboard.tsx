@@ -63,7 +63,8 @@ const Dashboard = () => {
       const { count: studentCount } = await supabase
         .from("students")
         .select("*", { count: "exact", head: true })
-        .eq("status", "active");
+        .eq("status", "active")
+        .neq("application_cycle", "2026");
 
       const { count: taskCount } = await supabase
         .from("tasks")
@@ -96,6 +97,7 @@ const Dashboard = () => {
         .from("students")
         .select("id, first_name, last_name, current_stage, application_cycle, created_at")
         .eq("status", "active")
+        .neq("application_cycle", "2026")
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -126,7 +128,8 @@ const Dashboard = () => {
       const { data: students } = await supabase
         .from("students")
         .select("id, first_name, last_name")
-        .eq("status", "active");
+        .eq("status", "active")
+        .neq("application_cycle", "2026");
 
       if (!students || students.length === 0) return;
 

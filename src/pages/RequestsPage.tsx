@@ -26,9 +26,10 @@ const RequestsPage = () => {
         .from('ad_hoc_requests')
         .select(`
           *,
-          students(first_name, last_name),
+          students!inner(first_name, last_name, application_cycle),
           profiles!ad_hoc_requests_assigned_to_fkey(full_name)
         `)
+        .neq("students.application_cycle", "2026")
         .order('created_at', { ascending: false });
 
       if (error) throw error;

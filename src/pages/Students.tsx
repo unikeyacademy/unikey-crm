@@ -61,6 +61,7 @@ const Students = () => {
       const { data, error } = await supabase
         .from("students")
         .select("id, student_id, first_name, last_name, preferred_name, email, phone, grade_level, current_school, application_cycle, status, tags, track, current_stage, target_major_primary, consultation_programme, assigned_consultant_id, secondary_consultant_id, curriculum")
+        .neq("application_cycle", "2026")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
