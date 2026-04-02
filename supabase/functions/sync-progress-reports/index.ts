@@ -247,11 +247,14 @@ serve(async (req) => {
     }
 
     const driveData = await driveResponse.json();
-    const files = driveData.files || [];
+    const allFiles = driveData.files || [];
+
+    // Filter files matching YYMMDD pattern at start of filename
+    const files = allFiles.filter((f: any) => /^\d{6}\s/.test(f.name));
 
     if (files.length === 0) {
       return new Response(
-        JSON.stringify({ message: 'No progress reports found in the Drive folder', imported: 0 }),
+        JSON.stringify({ message: 'No files matching the YYMMDD naming pattern found in the Drive folder', imported: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -277,6 +280,9 @@ serve(async (req) => {
 
     for (const file of newFiles.slice(0, 10)) { // Limit to 10 at a time
       try {
+        // Parse metadata from filename first
+        const filenameMeta = parseFilename(file.name);
+
         let content: string;
         if (file.mimeType === 'application/vnd.google-apps.document') {
           content = await exportGoogleDoc(file.id, accessToken);
@@ -286,21 +292,33 @@ serve(async (req) => {
 
         const parsed = await parseReportWithAI(content, file.name);
 
+        // Use filename metadata as primary source, AI-parsed as fallback
+        const consultationDate = filenameMeta.date 
+          ? `${filenameMeta.date}T00:00:00Z` 
+          : (parsed.consultation_date || file.modifiedTime);
+        
+        const consultationType = filenameMeta.meetingType || parsed.consultation_type || 'Progress Review';
+        
+        const attendees = [
+          ...(filenameMeta.consultantName ? [filenameMeta.consultantName] : []),
+          ...(parsed.attendees || []).filter((a: string) => a !== filenameMeta.consultantName),
+        ];
+
         // Insert as consultation
         const { error: insertError } = await supabase
           .from('consultations')
           .insert({
             student_id: studentId,
             consultant_id: user.id,
-            consultation_date: parsed.consultation_date || file.modifiedTime,
+            consultation_date: consultationDate,
             duration_minutes: parsed.duration_minutes,
-            consultation_type: parsed.consultation_type || 'Progress Review',
+            consultation_type: consultationType,
             topics_discussed: parsed.topics_discussed || [],
             notes: parsed.notes ? `${parsed.notes}${parsed.progress_summary ? '\n\nProgress Summary: ' + parsed.progress_summary : ''}` : null,
             action_items: parsed.action_items || [],
             next_steps: parsed.next_steps,
             key_decisions: parsed.key_decisions,
-            attendees: parsed.attendees || [],
+            attendees,
             meeting_link: file.webViewLink, // Store Drive link to prevent re-import
           });
 
@@ -308,7 +326,7 @@ serve(async (req) => {
           console.error(`Error inserting consultation for ${file.name}:`, insertError);
           results.push({ file: file.name, status: 'error', error: insertError.message });
         } else {
-          results.push({ file: file.name, status: 'imported' });
+          results.push({ file: file.name, status: 'imported', date: filenameMeta.date, type: consultationType });
         }
       } catch (fileError) {
         console.error(`Error processing ${file.name}:`, fileError);
