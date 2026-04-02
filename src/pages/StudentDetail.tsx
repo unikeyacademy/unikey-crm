@@ -54,6 +54,8 @@ interface Student {
   current_gpa: string | null;
   academic_strengths: string | null;
   academic_weaknesses: string | null;
+  tutor_in_charge: string | null;
+  secondary_tutor: string | null;
   google_drive_folder_url: string | null;
 }
 
