@@ -17,6 +17,7 @@ import StudentDocumentsTab from "@/components/students/StudentDocumentsTab";
 import StudentChecklistsTab from "@/components/students/StudentChecklistsTab";
 import StudentEssaysTab from "@/components/students/StudentEssaysTab";
 import StudentFinancialsTab from "@/components/students/StudentFinancialsTab";
+import StudentNotionNotesTab from "@/components/students/StudentNotionNotesTab";
 
 interface Student {
   id: string;
