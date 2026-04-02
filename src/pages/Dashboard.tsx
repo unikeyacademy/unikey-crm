@@ -59,30 +59,50 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      // Fetch 2026 student IDs to exclude site-wide
+      const { data: excludedStudents } = await supabase
+        .from("students")
+        .select("id")
+        .eq("application_cycle", "2026");
+      const excludedIds = (excludedStudents || []).map(s => s.id);
+
       // Fetch stats
       const { count: studentCount } = await supabase
         .from("students")
         .select("*", { count: "exact", head: true })
-        .eq("status", "active");
+        .eq("status", "active")
+        .neq("application_cycle", "2026");
 
-      const { count: taskCount } = await supabase
+      let taskQuery = supabase
         .from("tasks")
         .select("*", { count: "exact", head: true })
         .neq("status", "completed");
+      if (excludedIds.length > 0) {
+        taskQuery = taskQuery.not("student_id", "in", `(${excludedIds.join(",")})`);
+      }
+      const { count: taskCount } = await taskQuery;
 
       const now = new Date();
       const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const { count: consultationCount } = await supabase
+      let consultQuery = supabase
         .from("consultations")
         .select("*", { count: "exact", head: true })
         .gte("consultation_date", now.toISOString())
         .lte("consultation_date", nextWeek.toISOString());
+      if (excludedIds.length > 0) {
+        consultQuery = consultQuery.not("student_id", "in", `(${excludedIds.join(",")})`);
+      }
+      const { count: consultationCount } = await consultQuery;
 
-      const { count: overdueCount } = await supabase
+      let overdueQuery = supabase
         .from("tasks")
         .select("*", { count: "exact", head: true })
         .lt("due_date", now.toISOString())
         .neq("status", "completed");
+      if (excludedIds.length > 0) {
+        overdueQuery = overdueQuery.not("student_id", "in", `(${excludedIds.join(",")})`);
+      }
+      const { count: overdueCount } = await overdueQuery;
 
       setStats({
         totalStudents: studentCount || 0,
@@ -96,19 +116,24 @@ const Dashboard = () => {
         .from("students")
         .select("id, first_name, last_name, current_stage, application_cycle, created_at")
         .eq("status", "active")
+        .neq("application_cycle", "2026")
         .order("created_at", { ascending: false })
         .limit(5);
 
       setRecentStudents(studentsData || []);
 
       // Fetch upcoming tasks
-      const { data: tasksData } = await supabase
+      let upcomingQuery = supabase
         .from("tasks")
         .select(`id, title, due_date, priority, students (first_name, last_name)`)
         .neq("status", "completed")
         .not("due_date", "is", null)
         .order("due_date", { ascending: true })
         .limit(5);
+      if (excludedIds.length > 0) {
+        upcomingQuery = upcomingQuery.not("student_id", "in", `(${excludedIds.join(",")})`);
+      }
+      const { data: tasksData } = await upcomingQuery;
 
       setUpcomingTasks(tasksData || []);
 
@@ -126,7 +151,8 @@ const Dashboard = () => {
       const { data: students } = await supabase
         .from("students")
         .select("id, first_name, last_name")
-        .eq("status", "active");
+        .eq("status", "active")
+        .neq("application_cycle", "2026");
 
       if (!students || students.length === 0) return;
 

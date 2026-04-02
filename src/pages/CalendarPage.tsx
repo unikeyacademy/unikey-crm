@@ -32,11 +32,13 @@ const CalendarPage = () => {
         .from('consultations')
         .select(`
           *,
-          students:student_id (
+          students:student_id!inner (
             first_name,
-            last_name
+            last_name,
+            application_cycle
           )
         `)
+        .neq("students.application_cycle", "2026")
         .gte('consultation_date', new Date().toISOString())
         .order('consultation_date', { ascending: true })
         .limit(10);

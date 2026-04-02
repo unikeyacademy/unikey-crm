@@ -22,7 +22,14 @@ const RequestsPage = () => {
 
   const fetchRequests = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch 2026 student IDs to exclude
+      const { data: excludedStudents } = await supabase
+        .from("students")
+        .select("id")
+        .eq("application_cycle", "2026");
+      const excludedIds = (excludedStudents || []).map(s => s.id);
+
+      let query = supabase
         .from('ad_hoc_requests')
         .select(`
           *,
@@ -30,6 +37,12 @@ const RequestsPage = () => {
           profiles!ad_hoc_requests_assigned_to_fkey(full_name)
         `)
         .order('created_at', { ascending: false });
+
+      if (excludedIds.length > 0) {
+        query = query.not("student_id", "in", `(${excludedIds.join(",")})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setRequests(data || []);

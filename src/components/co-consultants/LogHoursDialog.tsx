@@ -53,7 +53,7 @@ const LogHoursDialog = ({ open, onOpenChange, consultantProfileId, defaultHourly
   }, [consultantProfileId, defaultHourlyRate]);
 
   const fetchStudents = async () => {
-    const { data } = await supabase.from("students").select("id, first_name, last_name, student_id").eq("status", "active").order("first_name");
+    const { data } = await supabase.from("students").select("id, first_name, last_name, student_id").eq("status", "active").neq("application_cycle", "2026").order("first_name");
     setStudents(data || []);
   };
 

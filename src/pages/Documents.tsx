@@ -26,6 +26,7 @@ const Documents = () => {
         .from('students')
         .select('id, first_name, last_name, student_id, email')
         .eq('status', 'active')
+        .neq('application_cycle', '2026')
         .order('first_name');
 
       if (error) throw error;
