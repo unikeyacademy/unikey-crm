@@ -166,17 +166,35 @@ const Students = () => {
           </Select>
 
           {uniqueCycles.length > 0 && (
-            <Select value={filterCycle} onValueChange={setFilterCycle}>
-              <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="Entry Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Cycles</SelectItem>
-                {uniqueCycles.sort().map(c => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
+                  {filterCycles.length === 0
+                    ? "All Cycles"
+                    : filterCycles.length === 1
+                      ? filterCycles[0]
+                      : `${filterCycles.length} Cycles`}
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[180px] p-2" align="start">
+                <div className="space-y-1">
+                  {uniqueCycles.sort().map(c => (
+                    <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                      <Checkbox
+                        checked={filterCycles.includes(c)}
+                        onCheckedChange={(checked) => {
+                          setFilterCycles(prev =>
+                            checked ? [...prev, c] : prev.filter(v => v !== c)
+                          );
+                        }}
+                      />
+                      {c}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
 
           {uniqueTracks.length > 0 && (
