@@ -105,7 +105,7 @@ const Students = () => {
       (student.email && student.email.toLowerCase().includes(query)) ||
       (student.target_major_primary && student.target_major_primary.toLowerCase().includes(query));
 
-    const matchesCycle = filterCycle === "all" || student.application_cycle === filterCycle;
+    const matchesCycle = filterCycles.length === 0 || (student.application_cycle && filterCycles.includes(student.application_cycle));
     const matchesTrack = filterTrack === "all" || student.track === filterTrack;
     const matchesStatus = filterStatus === "all" || student.status === filterStatus;
     const matchesProgramme = filterProgramme === "all" || student.consultation_programme === filterProgramme;
