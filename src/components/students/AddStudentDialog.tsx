@@ -125,6 +125,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           target_major_primary: formData.target_major_primary || null,
           target_major_secondary: formData.target_major_secondary || null,
           track: formData.track || null,
+          consultation_programme: formData.consultation_programme || null,
           risk_profile: formData.risk_profile || null,
           lead_source: formData.lead_source || null,
           engagement_stage: formData.engagement_stage || null,
