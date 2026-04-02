@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, FolderSync, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import AddConsultationDialog from "./AddConsultationDialog";
 
@@ -29,9 +29,12 @@ interface StudentConsultationsTabProps {
 const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) => {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [driveUrl, setDriveUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConsultations();
+    fetchDriveUrl();
   }, [studentId]);
 
   const fetchConsultations = async () => {
@@ -52,11 +55,74 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
     }
   };
 
+  const fetchDriveUrl = async () => {
+    const { data } = await supabase
+      .from("students")
+      .select("google_drive_folder_url")
+      .eq("id", studentId)
+      .single();
+    setDriveUrl((data as any)?.google_drive_folder_url || null);
+  };
+
+  const handleSyncFromDrive = async () => {
+    if (!driveUrl) {
+      toast.error("No Google Drive folder linked. Add one in the Profile tab.");
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-progress-reports", {
+        body: { studentId, folderUrl: driveUrl },
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success(data?.message || "Sync complete");
+
+      if (data?.imported > 0) {
+        fetchConsultations();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sync progress reports");
+      console.error(error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const isDriveLink = (link: string | null) => {
+    return link?.includes("drive.google.com") || link?.includes("docs.google.com");
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">Consultation History</h3>
-        <AddConsultationDialog studentId={studentId} onAdded={fetchConsultations} />
+        <div className="flex gap-2">
+          {driveUrl && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncFromDrive}
+              disabled={syncing}
+              className="gap-2"
+            >
+              {syncing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FolderSync className="h-4 w-4" />
+              )}
+              {syncing ? "Syncing..." : "Sync from Drive"}
+            </Button>
+          )}
+          <AddConsultationDialog studentId={studentId} onAdded={fetchConsultations} />
+        </div>
       </div>
 
       {loading ? (
@@ -68,10 +134,19 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
         </Card>
       ) : consultations.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
+          <CardContent className="py-12 text-center space-y-3">
             <p className="text-muted-foreground">
-              No consultations logged yet. Click "Add Consultation" to get started.
+              No consultations logged yet.
             </p>
+            {driveUrl ? (
+              <p className="text-sm text-muted-foreground">
+                Click "Sync from Drive" to import progress reports, or "Add Consultation" to log one manually.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Link a Google Drive folder in the Profile tab to sync progress reports, or add one manually.
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -81,9 +156,17 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <CardTitle className="text-lg">
-                      {consultation.consultation_type}
-                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-lg">
+                        {consultation.consultation_type}
+                      </CardTitle>
+                      {isDriveLink(consultation.meeting_link) && (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <FolderSync className="h-3 w-3" />
+                          From Drive
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
@@ -97,6 +180,14 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
                       )}
                     </div>
                   </div>
+                  {isDriveLink(consultation.meeting_link) && (
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={consultation.meeting_link!} target="_blank" rel="noopener noreferrer" className="gap-1">
+                        <ExternalLink className="h-3 w-3" />
+                        View Report
+                      </a>
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -158,7 +249,7 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
                   </div>
                 )}
 
-                {consultation.meeting_link && (
+                {consultation.meeting_link && !isDriveLink(consultation.meeting_link) && (
                   <div>
                     <Button
                       variant="outline"
