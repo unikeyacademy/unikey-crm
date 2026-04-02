@@ -267,6 +267,10 @@ const StudentDetail = () => {
         <TabsContent value="financials">
           <StudentFinancialsTab studentId={student.id} />
         </TabsContent>
+
+        <TabsContent value="notion">
+          <StudentNotionNotesTab notionPageId={student.notion_page_id} notionNotes={student.notion_notes} />
+        </TabsContent>
       </Tabs>
     </div>
   );
