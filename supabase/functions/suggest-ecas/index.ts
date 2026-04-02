@@ -28,7 +28,6 @@ serve(async (req) => {
 
     console.log("Fetching student data for:", studentId);
 
-    // Fetch student data
     const { data: student, error: studentError } = await supabase
       .from("students")
       .select("*, student_ecas(*), student_university_targets(*)")
@@ -45,7 +44,6 @@ serve(async (req) => {
 
     console.log("Fetching ECA opportunities...");
 
-    // Fetch all active ECA opportunities
     const { data: opportunities, error: ecaError } = await supabase
       .from("eca_opportunities")
       .select("*")
@@ -62,7 +60,6 @@ serve(async (req) => {
 
     console.log(`Found ${opportunities?.length || 0} opportunities`);
 
-    // Prepare context for AI
     const studentContext = `
 Student Profile:
 - Name: ${student.first_name} ${student.last_name}
@@ -76,7 +73,12 @@ Student Profile:
 - University Targets: ${student.student_university_targets?.map((u: any) => `${u.university_name} (${u.country})`).join(", ") || "None"}
 `;
 
+    const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!PERPLEXITY_API_KEY) {
+      throw new Error("PERPLEXITY_API_KEY not configured");
+    }
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
     }
@@ -84,9 +86,9 @@ Student Profile:
     let databaseSuggestions: any[] = [];
     let aiGeneratedSuggestions: any[] = [];
 
-    // ===== STAGE 1: Database-based suggestions =====
+    // ===== STAGE 1: Database-based suggestions (Lovable AI for reasoning over internal data) =====
     if (opportunities && opportunities.length > 0) {
-      console.log("STAGE 1: Analyzing database opportunities...");
+      console.log("STAGE 1: Analyzing database opportunities with Lovable AI...");
       const opportunitiesContext = opportunities.map((opp) => `
 - ${opp.name}
   Type: ${opp.type}
@@ -119,176 +121,168 @@ ${opportunitiesContext}
 
 Based on this student's profile and the available opportunities, suggest 3-5 ECAs that would be most beneficial.`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "suggest_ecas",
-            description: "Return 3-5 ECA opportunity suggestions with detailed reasoning",
-            parameters: {
-              type: "object",
-              properties: {
-                suggestions: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      opportunity_name: { type: "string", description: "Exact name of the ECA opportunity" },
-                      fit_score: { type: "number", minimum: 1, maximum: 10, description: "How well this matches the student (1-10)" },
-                      reasoning: { type: "string", description: "Why this opportunity is a good fit" },
-                      key_benefits: { 
-                        type: "array",
-                        items: { type: "string" },
-                        description: "List of specific benefits for this student"
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          tools: [{
+            type: "function",
+            function: {
+              name: "suggest_ecas",
+              description: "Return 3-5 ECA opportunity suggestions with detailed reasoning",
+              parameters: {
+                type: "object",
+                properties: {
+                  suggestions: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        opportunity_name: { type: "string" },
+                        fit_score: { type: "number", minimum: 1, maximum: 10 },
+                        reasoning: { type: "string" },
+                        key_benefits: { type: "array", items: { type: "string" } },
+                        action_items: { type: "array", items: { type: "string" } }
                       },
-                      action_items: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Next steps the student should take"
-                      }
-                    },
-                    required: ["opportunity_name", "fit_score", "reasoning", "key_benefits"],
-                    additionalProperties: false
+                      required: ["opportunity_name", "fit_score", "reasoning", "key_benefits"],
+                      additionalProperties: false
+                    }
                   }
-                }
-              },
-              required: ["suggestions"],
-              additionalProperties: false
+                },
+                required: ["suggestions"],
+                additionalProperties: false
+              }
             }
-          }
-        }],
-        tool_choice: { type: "function", function: { name: "suggest_ecas" } }
-      }),
-    });
+          }],
+          tool_choice: { type: "function", function: { name: "suggest_ecas" } }
+        }),
+      });
 
-    if (aiResponse.ok) {
-      const aiData = await aiResponse.json();
-      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-      
-      if (toolCall) {
-        const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
-        
-        // Enrich with full opportunity data and mark as database source
-        databaseSuggestions = suggestions.map((suggestion: any) => {
-          const opportunity = opportunities.find(
-            (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
-          );
-          return {
-            ...suggestion,
-            source: "database",
-            opportunity: opportunity || null
-          };
-        }).filter((s: any) => s.opportunity !== null);
+      if (aiResponse.ok) {
+        const aiData = await aiResponse.json();
+        const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
 
-        console.log(`Stage 1: Found ${databaseSuggestions.length} database suggestions`);
+        if (toolCall) {
+          const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
+
+          databaseSuggestions = suggestions.map((suggestion: any) => {
+            const opportunity = opportunities.find(
+              (opp) => opp.name.toLowerCase() === suggestion.opportunity_name.toLowerCase()
+            );
+            return {
+              ...suggestion,
+              source: "database",
+              opportunity: opportunity || null
+            };
+          }).filter((s: any) => s.opportunity !== null);
+
+          console.log(`Stage 1: Found ${databaseSuggestions.length} database suggestions`);
+        }
+      } else {
+        console.error("Stage 1 AI call failed:", aiResponse.status);
       }
-    } else {
-      console.error("Stage 1 AI call failed:", aiResponse.status);
     }
-  }
 
-    // ===== STAGE 2: Gap Analysis and AI Discovery =====
-    const shouldRunStage2 = databaseSuggestions.length < 3 || 
+    // ===== STAGE 2: Perplexity sonar-reasoning-pro for AI Discovery =====
+    const shouldRunStage2 = databaseSuggestions.length < 3 ||
       (student.academic_interests && student.academic_interests.length > 0);
 
     if (shouldRunStage2) {
-      console.log("STAGE 2: Generating AI-discovered opportunities...");
+      console.log("STAGE 2: Discovering opportunities with Perplexity sonar-reasoning-pro...");
 
-      const discoveryPrompt = `You are a university admissions consultant with expertise in discovering innovative extracurricular opportunities.
-
-Analyze this student's profile and generate 2-3 NEW, creative ECA opportunities that would strengthen their application. These should be real opportunities that exist (competitions, programs, research, projects) but may not be in our current database.
+      const discoveryPrompt = `I'm a university admissions consultant looking for innovative extracurricular opportunities for a specific student. Here is their profile:
 
 ${studentContext}
 
-Generate opportunities that:
-1. Fill gaps in their current profile
-2. Align with their academic interests and target universities
-3. Are appropriate for their grade level and timeline
+Find 2-3 NEW, real extracurricular opportunities (competitions, programs, research, projects) that would strengthen this student's university application. Focus on:
+1. Filling gaps in their current ECA portfolio
+2. Alignment with academic interests and target universities
+3. Appropriate for their grade level and timeline
 4. Stand out and demonstrate initiative
-5. Are actually accessible/available to students
+5. Actually accessible/available to students
 
-For each opportunity, provide complete details as if you were adding it to a database.`;
+Return a JSON object with an "opportunities" array, each containing:
+- name: string
+- type: string (Competition, Research Program, Summer Program, etc.)
+- subject_areas: string[]
+- eligibility: string
+- time_commitment: string
+- cost: string
+- prestige_level: string (High/Medium/Low)
+- deadline_type: string (annual/rolling/seasonal)
+- website: string (official URL)
+- fit_score: number (1-10)
+- reasoning: string (why recommended for this student)
+- key_benefits: string[]`;
 
       try {
-        const discoveryResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const discoveryResponse = await fetch("https://api.perplexity.ai/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+            "Authorization": `Bearer ${PERPLEXITY_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "sonar-reasoning-pro",
             messages: [
-              { role: "system", content: "You are a university admissions consultant specializing in discovering and recommending extracurricular opportunities." },
+              {
+                role: "system",
+                content: "You are a university admissions consultant specializing in discovering and recommending extracurricular opportunities. Always respond with valid JSON only, no markdown."
+              },
               { role: "user", content: discoveryPrompt }
             ],
-            tools: [{
-              type: "function",
-              function: {
-                name: "generate_eca_opportunities",
-                description: "Generate new ECA opportunities with complete details",
-                parameters: {
-                  type: "object",
+            response_format: {
+              type: 'json_schema',
+              json_schema: {
+                name: 'discovered_ecas',
+                schema: {
+                  type: 'object',
                   properties: {
                     opportunities: {
-                      type: "array",
+                      type: 'array',
                       items: {
-                        type: "object",
+                        type: 'object',
                         properties: {
-                          name: { type: "string", description: "Name of the opportunity" },
-                          type: { type: "string", description: "Type of ECA (e.g., Competition, Research, Project, Volunteering)" },
-                          subject_areas: { 
-                            type: "array", 
-                            items: { type: "string" },
-                            description: "Relevant subject areas"
-                          },
-                          eligibility: { type: "string", description: "Who can participate" },
-                          time_commitment: { type: "string", description: "Expected time commitment" },
-                          cost: { type: "string", description: "Cost information" },
-                          prestige_level: { type: "string", description: "Prestige level (High/Medium/Low)" },
-                          deadline_type: { type: "string", description: "Deadline type (annual/rolling/seasonal)" },
-                          website: { type: "string", description: "Official website URL if known" },
-                          fit_score: { type: "number", minimum: 1, maximum: 10, description: "Fit for this specific student" },
-                          reasoning: { type: "string", description: "Why this is recommended for this student" },
-                          key_benefits: {
-                            type: "array",
-                            items: { type: "string" },
-                            description: "Key benefits for this student"
-                          }
+                          name: { type: 'string' },
+                          type: { type: 'string' },
+                          subject_areas: { type: 'array', items: { type: 'string' } },
+                          eligibility: { type: 'string' },
+                          time_commitment: { type: 'string' },
+                          cost: { type: 'string' },
+                          prestige_level: { type: 'string' },
+                          deadline_type: { type: 'string' },
+                          website: { type: 'string' },
+                          fit_score: { type: 'number' },
+                          reasoning: { type: 'string' },
+                          key_benefits: { type: 'array', items: { type: 'string' } }
                         },
-                        required: ["name", "type", "subject_areas", "eligibility", "time_commitment", "cost", "prestige_level", "fit_score", "reasoning", "key_benefits"],
-                        additionalProperties: false
+                        required: ['name', 'type', 'subject_areas', 'fit_score', 'reasoning', 'key_benefits']
                       }
                     }
                   },
-                  required: ["opportunities"],
-                  additionalProperties: false
+                  required: ['opportunities']
                 }
               }
-            }],
-            tool_choice: { type: "function", function: { name: "generate_eca_opportunities" } }
+            }
           }),
         });
 
         if (discoveryResponse.ok) {
           const discoveryData = await discoveryResponse.json();
-          const toolCall = discoveryData.choices?.[0]?.message?.tool_calls?.[0];
-          
-          if (toolCall) {
-            const generatedOpps = JSON.parse(toolCall.function.arguments).opportunities;
-            
-            // Mark as AI-generated and structure for UI
+          const content = discoveryData.choices?.[0]?.message?.content;
+          const citations = discoveryData.citations || [];
+
+          if (content) {
+            const generatedOpps = JSON.parse(content).opportunities;
+
             aiGeneratedSuggestions = generatedOpps.map((opp: any) => ({
               opportunity_name: opp.name,
               fit_score: opp.fit_score,
@@ -300,6 +294,7 @@ For each opportunity, provide complete details as if you were adding it to a dat
                 "Mark application deadline in calendar"
               ],
               source: "ai_generated",
+              citations,
               opportunity: {
                 id: null,
                 name: opp.name,
@@ -320,21 +315,20 @@ For each opportunity, provide complete details as if you were adding it to a dat
             console.log(`Stage 2: Generated ${aiGeneratedSuggestions.length} AI opportunities`);
           }
         } else {
-          console.error("Stage 2 AI call failed:", discoveryResponse.status);
+          const errText = await discoveryResponse.text();
+          console.error("Stage 2 Perplexity call failed:", discoveryResponse.status, errText);
         }
       } catch (error) {
         console.error("Stage 2 error:", error);
-        // Continue with Stage 1 results even if Stage 2 fails
       }
     }
 
-    // ===== Combine and Return Results =====
     const allSuggestions = [...databaseSuggestions, ...aiGeneratedSuggestions];
-    
+
     console.log(`Returning ${allSuggestions.length} total suggestions (${databaseSuggestions.length} database, ${aiGeneratedSuggestions.length} AI-generated)`);
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         suggestions: allSuggestions,
         database_count: databaseSuggestions.length,
         ai_generated_count: aiGeneratedSuggestions.length
