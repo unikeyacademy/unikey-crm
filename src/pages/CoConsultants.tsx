@@ -154,11 +154,12 @@ const CoConsultants = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
+                  <TableHead>University / Degree</TableHead>
                   <TableHead>Specialisation</TableHead>
+                  <TableHead>A-Level Subjects</TableHead>
+                  <TableHead>IB Subjects</TableHead>
+                  <TableHead>HKDSE Subjects</TableHead>
                   <TableHead>Rate</TableHead>
-                  <TableHead>Hours ({monthLabel})</TableHead>
-                  <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -166,12 +167,22 @@ const CoConsultants = () => {
               <TableBody>
                 {[...activeProfiles, ...inactiveProfiles].map(c => (
                   <TableRow key={c.id} className={!c.is_active ? "opacity-50" : ""}>
-                    <TableCell className="font-medium">{c.full_name}</TableCell>
-                    <TableCell>{c.email}</TableCell>
+                    <TableCell className="font-medium whitespace-nowrap">{c.full_name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[200px]">
+                      {(c as any).university_attended && <div className="truncate" title={(c as any).university_attended}>{(c as any).university_attended}</div>}
+                      {(c as any).degree && <div className="truncate text-xs" title={(c as any).degree}>{(c as any).degree}</div>}
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{c.specialisation || "—"}</TableCell>
+                    <TableCell className="text-sm max-w-[150px]">
+                      {(c as any).alevel_subjects ? <span className="truncate block" title={(c as any).alevel_subjects}>{(c as any).alevel_subjects}</span> : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm max-w-[150px]">
+                      {(c as any).ib_subjects ? <span className="truncate block" title={(c as any).ib_subjects}>{(c as any).ib_subjects}</span> : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm max-w-[150px]">
+                      {(c as any).hkdse_subjects ? <span className="truncate block" title={(c as any).hkdse_subjects}>{(c as any).hkdse_subjects}</span> : "—"}
+                    </TableCell>
                     <TableCell>${Number(c.default_hourly_rate).toFixed(2)}/h</TableCell>
-                    <TableCell>{(c.monthHours || 0).toFixed(1)}h</TableCell>
-                    <TableCell className="font-medium">${(c.monthAmount || 0).toFixed(2)}</TableCell>
                     <TableCell><Badge variant={c.is_active ? "default" : "secondary"}>{c.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-1">
