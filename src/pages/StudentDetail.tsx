@@ -219,7 +219,7 @@ const StudentDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-9">
+              <TabsList className="grid w-full grid-cols-10">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="consultations">Consultations</TabsTrigger>
                 <TabsTrigger value="tasks">Tasks</TabsTrigger>
@@ -229,6 +229,7 @@ const StudentDetail = () => {
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="checklists">Checklists</TabsTrigger>
                 <TabsTrigger value="financials">Financials</TabsTrigger>
+                <TabsTrigger value="notion">Notion Notes</TabsTrigger>
               </TabsList>
 
         <TabsContent value="profile">
