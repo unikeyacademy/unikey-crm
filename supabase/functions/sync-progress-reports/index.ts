@@ -59,6 +59,67 @@ function extractFolderId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+// Parse filename format: YYMMDD [Student Name] [Nature of Meeting] with [Consultant Name]
+function parseFilename(filename: string): { date: string | null; studentName: string | null; meetingType: string | null; consultantName: string | null } {
+  // Remove file extension
+  const name = filename.replace(/\.[^.]+$/, '').trim();
+  
+  // Match: YYMMDD followed by content, with "with" separating consultant
+  const match = name.match(/^(\d{6})\s+(.+?)\s+with\s+(.+)$/i);
+  if (!match) {
+    return { date: null, studentName: null, meetingType: null, consultantName: null };
+  }
+
+  const dateStr = match[1]; // YYMMDD
+  const middlePart = match[2].trim(); // "[Student Name] [Nature of Meeting]"
+  const consultantName = match[3].trim();
+
+  // Parse YYMMDD to ISO date
+  const yy = parseInt(dateStr.substring(0, 2));
+  const mm = parseInt(dateStr.substring(2, 4));
+  const dd = parseInt(dateStr.substring(4, 6));
+  const year = yy >= 50 ? 1900 + yy : 2000 + yy;
+  const date = `${year}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+
+  // Try to split middle part into student name and meeting type
+  // Common meeting types to look for
+  const meetingTypes = [
+    'Progress Review', 'Progress Report', 'Strategy Session', 'Application Review',
+    'Initial Consultation', 'Follow-up', 'Follow Up', 'Check-in', 'Check In',
+    'University Review', 'Essay Review', 'ECA Review', 'Interview Prep',
+    'Kickoff', 'Kick-off', 'Meeting', 'Session', 'Review', 'Consultation',
+    'Catch-up', 'Catch Up', 'Debrief', 'Planning', 'Brainstorm',
+  ];
+
+  let studentName = middlePart;
+  let meetingType: string | null = null;
+
+  // Try to find a known meeting type at the end of the middle part
+  for (const mt of meetingTypes) {
+    if (middlePart.toLowerCase().endsWith(mt.toLowerCase())) {
+      studentName = middlePart.substring(0, middlePart.length - mt.length).trim();
+      meetingType = mt;
+      break;
+    }
+  }
+
+  // If no known type found, try splitting on last space-separated word group
+  if (!meetingType) {
+    // Assume format is "FirstName LastName MeetingType" — take last 1-2 words as type
+    const words = middlePart.split(/\s+/);
+    if (words.length >= 3) {
+      // Try last 2 words as meeting type
+      meetingType = words.slice(-2).join(' ');
+      studentName = words.slice(0, -2).join(' ');
+    } else if (words.length === 2) {
+      meetingType = words[1];
+      studentName = words[0];
+    }
+  }
+
+  return { date, studentName, meetingType, consultantName };
+}
+
 async function exportGoogleDoc(fileId: string, accessToken: string): Promise<string> {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`,
