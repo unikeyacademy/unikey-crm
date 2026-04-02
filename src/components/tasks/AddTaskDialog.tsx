@@ -42,6 +42,7 @@ const AddTaskDialog = ({ studentId, onTaskAdded, trigger }: AddTaskDialogProps) 
       .from("students")
       .select("id, first_name, last_name, student_id")
       .eq("status", "active")
+      .neq("application_cycle", "2026")
       .order("last_name");
     setStudents(data || []);
   };

@@ -120,6 +120,7 @@ const AddConsultationCalendarDialog = ({
       .from('students')
       .select('id, first_name, last_name')
       .eq('status', 'active')
+      .neq('application_cycle', '2026')
       .order('first_name');
     setStudents(data || []);
   };
