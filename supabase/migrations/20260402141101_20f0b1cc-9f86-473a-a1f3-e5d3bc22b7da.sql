@@ -1,0 +1,1 @@
+ALTER TABLE public.students ADD COLUMN google_drive_folder_url text;

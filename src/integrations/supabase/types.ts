@@ -1339,6 +1339,7 @@ export type Database = {
           engagement_stage: string | null
           first_name: string
           gender: string | null
+          google_drive_folder_url: string | null
           grade_level: number | null
           graduation_year: number | null
           ib_predicted_grade: number | null
@@ -1386,6 +1387,7 @@ export type Database = {
           engagement_stage?: string | null
           first_name: string
           gender?: string | null
+          google_drive_folder_url?: string | null
           grade_level?: number | null
           graduation_year?: number | null
           ib_predicted_grade?: number | null
@@ -1433,6 +1435,7 @@ export type Database = {
           engagement_stage?: string | null
           first_name?: string
           gender?: string | null
+          google_drive_folder_url?: string | null
           grade_level?: number | null
           graduation_year?: number | null
           ib_predicted_grade?: number | null
