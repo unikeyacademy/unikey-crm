@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ExternalLink } from "lucide-react";
 import EditStageDialog from "./EditStageDialog";
 import StudentTestScoresSection from "./StudentTestScoresSection";
 
@@ -314,6 +317,16 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
         </Card>
       )}
 
+      {/* Google Drive Folder */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Google Drive Folder</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <GoogleDriveFolderField studentId={student.id} currentUrl={student.google_drive_folder_url} onUpdate={onUpdate} />
+        </CardContent>
+      </Card>
+
       {/* Notes */}
       {student.notes && (
         <Card>
@@ -324,6 +337,48 @@ const StudentProfileTab = ({ student, onUpdate }: StudentProfileTabProps) => {
             <p className="text-sm whitespace-pre-wrap">{student.notes}</p>
           </CardContent>
         </Card>
+      )}
+    </div>
+  );
+};
+
+const GoogleDriveFolderField = ({ studentId, currentUrl, onUpdate }: { studentId: string; currentUrl: string | null; onUpdate: () => void }) => {
+  const [url, setUrl] = useState(currentUrl || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("students")
+        .update({ google_drive_folder_url: url || null } as any)
+        .eq("id", studentId);
+      if (error) throw error;
+      onUpdate();
+    } catch (error: any) {
+      console.error("Error saving Drive URL:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex gap-2 items-center">
+      <Input
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="https://drive.google.com/drive/folders/..."
+        className="flex-1"
+      />
+      <Button size="sm" onClick={handleSave} disabled={saving || url === (currentUrl || "")}>
+        {saving ? "Saving..." : "Save"}
+      </Button>
+      {currentUrl && (
+        <Button size="sm" variant="outline" asChild>
+          <a href={currentUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </Button>
       )}
     </div>
   );
