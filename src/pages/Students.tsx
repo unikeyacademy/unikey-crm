@@ -113,7 +113,7 @@ const Students = () => {
     return matchesSearch && matchesCycle && matchesTrack && matchesStatus && matchesProgramme;
   });
 
-  const hasActiveFilters = filterCycle !== "all" || filterTrack !== "all" || filterStatus !== "all" || filterProgramme !== "all";
+  const hasActiveFilters = filterCycles.length > 0 || filterTrack !== "all" || filterStatus !== "all" || filterProgramme !== "all";
 
   const clearFilters = () => {
     setFilterCycle("all");
