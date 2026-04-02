@@ -474,6 +474,25 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                 />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="consultation_programme">Consultation Programme</Label>
+                <Select value={formData.consultation_programme} onValueChange={(value) => setFormData({ ...formData, consultation_programme: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select programme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UK Admissions Consulting Programme">UK Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="US Admissions Consulting Programme">US Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="US>UK Admissions Consulting Programme">US&gt;UK Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="UK/US Admissions Consulting Programme">UK/US Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="UK/US/Singapore Admissions Consulting Programme">UK/US/Singapore Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="UK/US/CA Admissions Consulting Programme">UK/US/CA Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="Interview Preparation Programme">Interview Preparation Programme</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="track">Track</Label>
