@@ -58,6 +58,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     target_major_primary: "",
     target_major_secondary: "",
     track: "",
+    consultation_programme: "",
     risk_profile: "",
     lead_source: "",
     engagement_stage: "Active",
