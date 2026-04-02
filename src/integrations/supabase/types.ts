@@ -1389,6 +1389,8 @@ export type Database = {
           last_name: string
           lead_source: string | null
           notes: string | null
+          notion_notes: string | null
+          notion_page_id: string | null
           parent_email: string | null
           parent_names: string | null
           parent_phone: string | null
@@ -1439,6 +1441,8 @@ export type Database = {
           last_name: string
           lead_source?: string | null
           notes?: string | null
+          notion_notes?: string | null
+          notion_page_id?: string | null
           parent_email?: string | null
           parent_names?: string | null
           parent_phone?: string | null
@@ -1489,6 +1493,8 @@ export type Database = {
           last_name?: string
           lead_source?: string | null
           notes?: string | null
+          notion_notes?: string | null
+          notion_page_id?: string | null
           parent_email?: string | null
           parent_names?: string | null
           parent_phone?: string | null

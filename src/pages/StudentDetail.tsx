@@ -17,6 +17,7 @@ import StudentDocumentsTab from "@/components/students/StudentDocumentsTab";
 import StudentChecklistsTab from "@/components/students/StudentChecklistsTab";
 import StudentEssaysTab from "@/components/students/StudentEssaysTab";
 import StudentFinancialsTab from "@/components/students/StudentFinancialsTab";
+import StudentNotionNotesTab from "@/components/students/StudentNotionNotesTab";
 
 interface Student {
   id: string;
@@ -57,6 +58,8 @@ interface Student {
   tutor_in_charge: string | null;
   secondary_tutor: string | null;
   google_drive_folder_url: string | null;
+  notion_page_id: string | null;
+  notion_notes: string | null;
 }
 
 const StudentDetail = () => {
@@ -216,7 +219,7 @@ const StudentDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-9">
+              <TabsList className="grid w-full grid-cols-10">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="consultations">Consultations</TabsTrigger>
                 <TabsTrigger value="tasks">Tasks</TabsTrigger>
@@ -226,6 +229,7 @@ const StudentDetail = () => {
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="checklists">Checklists</TabsTrigger>
                 <TabsTrigger value="financials">Financials</TabsTrigger>
+                <TabsTrigger value="notion">Notion Notes</TabsTrigger>
               </TabsList>
 
         <TabsContent value="profile">
@@ -262,6 +266,10 @@ const StudentDetail = () => {
 
         <TabsContent value="financials">
           <StudentFinancialsTab studentId={student.id} />
+        </TabsContent>
+
+        <TabsContent value="notion">
+          <StudentNotionNotesTab notionPageId={student.notion_page_id} notionNotes={student.notion_notes} />
         </TabsContent>
       </Tabs>
     </div>
