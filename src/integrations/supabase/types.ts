@@ -297,51 +297,93 @@ export type Database = {
       }
       co_consultant_profiles: {
         Row: {
+          admission_test_rate: string | null
+          admission_tests: string | null
+          alevel_rate: string | null
+          alevel_subjects: string | null
           bank_details: string | null
           contract_end_date: string | null
           contract_start_date: string | null
           created_at: string
           default_hourly_rate: number
+          degree: string | null
           email: string
           full_name: string
+          gcse_rate: string | null
+          gcse_subjects: string | null
+          hkdse_rate: string | null
+          hkdse_subjects: string | null
+          ib_rate: string | null
+          ib_subjects: string | null
           id: string
           is_active: boolean
           notes: string | null
           payment_terms: string | null
           phone: string | null
           specialisation: string | null
+          university_attended: string | null
+          university_rate: string | null
+          university_subjects: string | null
           updated_at: string
         }
         Insert: {
+          admission_test_rate?: string | null
+          admission_tests?: string | null
+          alevel_rate?: string | null
+          alevel_subjects?: string | null
           bank_details?: string | null
           contract_end_date?: string | null
           contract_start_date?: string | null
           created_at?: string
           default_hourly_rate?: number
+          degree?: string | null
           email: string
           full_name: string
+          gcse_rate?: string | null
+          gcse_subjects?: string | null
+          hkdse_rate?: string | null
+          hkdse_subjects?: string | null
+          ib_rate?: string | null
+          ib_subjects?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
           payment_terms?: string | null
           phone?: string | null
           specialisation?: string | null
+          university_attended?: string | null
+          university_rate?: string | null
+          university_subjects?: string | null
           updated_at?: string
         }
         Update: {
+          admission_test_rate?: string | null
+          admission_tests?: string | null
+          alevel_rate?: string | null
+          alevel_subjects?: string | null
           bank_details?: string | null
           contract_end_date?: string | null
           contract_start_date?: string | null
           created_at?: string
           default_hourly_rate?: number
+          degree?: string | null
           email?: string
           full_name?: string
+          gcse_rate?: string | null
+          gcse_subjects?: string | null
+          hkdse_rate?: string | null
+          hkdse_subjects?: string | null
+          ib_rate?: string | null
+          ib_subjects?: string | null
           id?: string
           is_active?: boolean
           notes?: string | null
           payment_terms?: string | null
           phone?: string | null
           specialisation?: string | null
+          university_attended?: string | null
+          university_rate?: string | null
+          university_subjects?: string | null
           updated_at?: string
         }
         Relationships: []
