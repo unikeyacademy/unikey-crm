@@ -58,6 +58,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
     target_major_primary: "",
     target_major_secondary: "",
     track: "",
+    consultation_programme: "",
     risk_profile: "",
     lead_source: "",
     engagement_stage: "Active",
@@ -124,6 +125,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
           target_major_primary: formData.target_major_primary || null,
           target_major_secondary: formData.target_major_secondary || null,
           track: formData.track || null,
+          consultation_programme: formData.consultation_programme || null,
           risk_profile: formData.risk_profile || null,
           lead_source: formData.lead_source || null,
           engagement_stage: formData.engagement_stage || null,
@@ -166,6 +168,7 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
         target_major_primary: "",
         target_major_secondary: "",
         track: "",
+        consultation_programme: "",
         risk_profile: "",
         lead_source: "",
         engagement_stage: "Active",
@@ -469,6 +472,25 @@ const AddStudentDialog = ({ onStudentAdded }: AddStudentDialogProps) => {
                   onChange={(e) => setFormData({ ...formData, target_major_secondary: e.target.value })}
                   placeholder="e.g. Political Science"
                 />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="consultation_programme">Consultation Programme</Label>
+                <Select value={formData.consultation_programme} onValueChange={(value) => setFormData({ ...formData, consultation_programme: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select programme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="UK Admissions Consulting Programme">UK Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="US Admissions Consulting Programme">US Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="US>UK Admissions Consulting Programme">US&gt;UK Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="UK/US Admissions Consulting Programme">UK/US Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="UK/US/Singapore Admissions Consulting Programme">UK/US/Singapore Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="UK/US/CA Admissions Consulting Programme">UK/US/CA Admissions Consulting Programme</SelectItem>
+                    <SelectItem value="Interview Preparation Programme">Interview Preparation Programme</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">

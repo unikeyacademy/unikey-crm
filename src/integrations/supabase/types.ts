@@ -1327,6 +1327,7 @@ export type Database = {
           application_cycle: string | null
           assigned_consultant_id: string | null
           city: string | null
+          consultation_programme: string | null
           contract_signed_date: string | null
           created_at: string
           current_gpa: string | null
@@ -1373,6 +1374,7 @@ export type Database = {
           application_cycle?: string | null
           assigned_consultant_id?: string | null
           city?: string | null
+          consultation_programme?: string | null
           contract_signed_date?: string | null
           created_at?: string
           current_gpa?: string | null
@@ -1419,6 +1421,7 @@ export type Database = {
           application_cycle?: string | null
           assigned_consultant_id?: string | null
           city?: string | null
+          consultation_programme?: string | null
           contract_signed_date?: string | null
           created_at?: string
           current_gpa?: string | null
