@@ -31,14 +31,27 @@ const Tasks = () => {
 
   const fetchTasks = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch 2026 student IDs to exclude
+      const { data: excludedStudents } = await supabase
+        .from("students")
+        .select("id")
+        .eq("application_cycle", "2026");
+      const excludedIds = (excludedStudents || []).map(s => s.id);
+
+      let query = supabase
         .from("tasks")
         .select(`
           *,
-          students!inner (first_name, last_name, application_cycle)
+          students (first_name, last_name)
         `)
-        .neq("students.application_cycle", "2026")
         .order("due_date", { ascending: true });
+
+      if (excludedIds.length > 0) {
+        // Exclude tasks linked to 2026 students
+        query = query.not("student_id", "in", `(${excludedIds.join(",")})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setTasks(data || []);
