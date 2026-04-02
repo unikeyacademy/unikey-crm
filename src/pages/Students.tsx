@@ -46,7 +46,7 @@ const Students = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterCycle, setFilterCycle] = useState<string>("all");
+  const [filterCycles, setFilterCycles] = useState<string[]>([]);
   const [filterTrack, setFilterTrack] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterProgramme, setFilterProgramme] = useState<string>("all");
