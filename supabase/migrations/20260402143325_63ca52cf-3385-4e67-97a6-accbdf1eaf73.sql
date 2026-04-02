@@ -1,0 +1,14 @@
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS alevel_subjects text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS alevel_rate text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS ib_subjects text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS ib_rate text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS hkdse_subjects text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS hkdse_rate text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS gcse_subjects text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS gcse_rate text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS university_subjects text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS university_rate text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS admission_tests text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS admission_test_rate text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS university_attended text;
+ALTER TABLE public.co_consultant_profiles ADD COLUMN IF NOT EXISTS degree text;
