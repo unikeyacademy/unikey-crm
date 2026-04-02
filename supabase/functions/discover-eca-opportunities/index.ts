@@ -15,33 +15,12 @@ serve(async (req) => {
     const { subject, interests, gradeLevel } = await req.json();
     console.log('Discovering ECAs for:', { subject, interests, gradeLevel });
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const PERPLEXITY_API_KEY = Deno.env.get('PERPLEXITY_API_KEY');
+    if (!PERPLEXITY_API_KEY) {
+      throw new Error('PERPLEXITY_API_KEY not configured');
     }
 
-    // Create search query based on inputs
-    const searchQuery = `extracurricular activities competitions programs for students interested in ${subject} ${interests} grade ${gradeLevel}`;
-    console.log('Search query:', searchQuery);
-
-    // Call Lovable AI to discover opportunities
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert at discovering extracurricular activities, competitions, and academic programs for students. 
-            Find real, verifiable opportunities with actual websites. Focus on prestigious and well-known programs.`
-          },
-          {
-            role: 'user',
-            content: `Find 8-10 extracurricular opportunities (competitions, programs, summer schools, etc.) for students interested in: ${subject} ${interests ? `with focus on ${interests}` : ''} (Grade ${gradeLevel || '9-12'}).
+    const searchPrompt = `Find 8-10 extracurricular opportunities (competitions, programs, summer schools, etc.) for students interested in: ${subject} ${interests ? `with focus on ${interests}` : ''} (Grade ${gradeLevel || '9-12'}).
 
 Include a mix of:
 - International competitions
@@ -50,85 +29,112 @@ Include a mix of:
 - Online courses
 - Olympiads
 
-For each opportunity, provide complete and accurate information including the website URL.`
+For each opportunity, provide the following in valid JSON format:
+- name: Full name of the opportunity
+- type: One of "Competition", "Research Program", "Summer Program", "Olympiad", "Conference", "Workshop", "Internship", "Publication", "Online Course", "Leadership Program", "Other"
+- subject_areas: Array of subject areas
+- prestige_level: One of "Local", "National", "International", "Tier 1 International", "Highly Selective"
+- cost: Cost information
+- time_commitment: Time commitment
+- deadline_date: Deadline in YYYY-MM-DD format if known
+- deadline_type: One of "annual", "rolling", "one-time"
+- eligibility: Eligibility requirements
+- best_for: Array of who this is best for
+- website: Official website URL
+- internal_notes: Key highlights and notes
+
+Return a JSON object with an "opportunities" array containing these objects.`;
+
+    console.log('Calling Perplexity sonar-pro for discovery...');
+
+    const aiResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'sonar-pro',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert at discovering extracurricular activities, competitions, and academic programs for students. Find real, verifiable opportunities with actual websites. Focus on prestigious and well-known programs. Always respond with valid JSON only, no markdown.`
+          },
+          {
+            role: 'user',
+            content: searchPrompt
           }
         ],
-        tools: [{
-          type: "function",
-          function: {
-            name: "discover_opportunities",
-            description: "Return a list of discovered ECA opportunities",
-            parameters: {
-              type: "object",
+        response_format: {
+          type: 'json_schema',
+          json_schema: {
+            name: 'eca_opportunities',
+            schema: {
+              type: 'object',
               properties: {
                 opportunities: {
-                  type: "array",
+                  type: 'array',
                   items: {
-                    type: "object",
+                    type: 'object',
                     properties: {
-                      name: { type: "string", description: "Full name of the opportunity" },
-                      type: { 
-                        type: "string", 
-                        enum: ["Competition", "Research Program", "Summer Program", "Olympiad", "Conference", "Workshop", "Internship", "Publication", "Online Course", "Leadership Program", "Other"]
-                      },
-                      subject_areas: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Subject areas"
-                      },
-                      prestige_level: {
-                        type: "string",
-                        enum: ["Local", "National", "International", "Tier 1 International", "Highly Selective"]
-                      },
-                      cost: { type: "string", description: "Cost information" },
-                      time_commitment: { type: "string", description: "Time commitment" },
-                      deadline_date: { type: "string", description: "Deadline in YYYY-MM-DD format if known" },
-                      deadline_type: { 
-                        type: "string", 
-                        enum: ["annual", "rolling", "one-time"]
-                      },
-                      eligibility: { type: "string", description: "Eligibility requirements" },
-                      best_for: {
-                        type: "array",
-                        items: { type: "string" },
-                        description: "Who this is best for"
-                      },
-                      website: { type: "string", description: "Official website URL" },
-                      internal_notes: { type: "string", description: "Key highlights and notes" }
+                      name: { type: 'string' },
+                      type: { type: 'string' },
+                      subject_areas: { type: 'array', items: { type: 'string' } },
+                      prestige_level: { type: 'string' },
+                      cost: { type: 'string' },
+                      time_commitment: { type: 'string' },
+                      deadline_date: { type: 'string' },
+                      deadline_type: { type: 'string' },
+                      eligibility: { type: 'string' },
+                      best_for: { type: 'array', items: { type: 'string' } },
+                      website: { type: 'string' },
+                      internal_notes: { type: 'string' }
                     },
-                    required: ["name", "type", "subject_areas", "website"]
+                    required: ['name', 'type', 'subject_areas', 'website']
                   }
                 }
               },
-              required: ["opportunities"],
-              additionalProperties: false
+              required: ['opportunities']
             }
           }
-        }],
-        tool_choice: { type: "function", function: { name: "discover_opportunities" } }
+        }
       })
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI API error:', aiResponse.status, errorText);
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      console.error('Perplexity API error:', aiResponse.status, errorText);
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ success: false, error: 'Rate limit exceeded. Please try again later.' }), {
+          status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ success: false, error: 'Perplexity API payment required. Please check your account.' }), {
+          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      throw new Error(`Perplexity API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('AI response received');
+    console.log('Perplexity response received');
 
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall || toolCall.function?.name !== 'discover_opportunities') {
-      console.error('Invalid AI response format');
-      throw new Error('Invalid AI response format');
+    const content = aiData.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('No content in Perplexity response');
     }
 
-    const discoveredData = JSON.parse(toolCall.function.arguments);
-    console.log('Discovered opportunities:', discoveredData.opportunities?.length || 0);
+    const discoveredData = JSON.parse(content);
+    const citations = aiData.citations || [];
+    console.log('Discovered opportunities:', discoveredData.opportunities?.length || 0, 'with', citations.length, 'citations');
 
     return new Response(
-      JSON.stringify({ success: true, opportunities: discoveredData.opportunities || [] }),
+      JSON.stringify({ 
+        success: true, 
+        opportunities: discoveredData.opportunities || [],
+        citations 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
