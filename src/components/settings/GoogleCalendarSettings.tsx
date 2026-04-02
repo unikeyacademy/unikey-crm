@@ -38,7 +38,7 @@ export const GoogleCalendarSettings = () => {
   };
 
   const handleConnect = () => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '598881371852-41bon48vp835sc5kg986hh8brap8qail.apps.googleusercontent.com';
     const redirectUri = `${window.location.origin}/auth/google/callback`;
     const scope = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.readonly';
     
