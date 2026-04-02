@@ -116,7 +116,7 @@ const Students = () => {
   const hasActiveFilters = filterCycles.length > 0 || filterTrack !== "all" || filterStatus !== "all" || filterProgramme !== "all";
 
   const clearFilters = () => {
-    setFilterCycle("all");
+    setFilterCycles([]);
     setFilterTrack("all");
     setFilterStatus("all");
     setFilterProgramme("all");
