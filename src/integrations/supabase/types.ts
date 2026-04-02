@@ -1357,6 +1357,7 @@ export type Database = {
           region_interest: string[] | null
           risk_profile: string | null
           secondary_consultant_id: string | null
+          secondary_tutor: string | null
           stage_history: Json | null
           status: string | null
           student_id: string
@@ -1366,6 +1367,7 @@ export type Database = {
           target_major_secondary: string | null
           timezone: string | null
           track: string | null
+          tutor_in_charge: string | null
           updated_at: string
         }
         Insert: {
@@ -1405,6 +1407,7 @@ export type Database = {
           region_interest?: string[] | null
           risk_profile?: string | null
           secondary_consultant_id?: string | null
+          secondary_tutor?: string | null
           stage_history?: Json | null
           status?: string | null
           student_id: string
@@ -1414,6 +1417,7 @@ export type Database = {
           target_major_secondary?: string | null
           timezone?: string | null
           track?: string | null
+          tutor_in_charge?: string | null
           updated_at?: string
         }
         Update: {
@@ -1453,6 +1457,7 @@ export type Database = {
           region_interest?: string[] | null
           risk_profile?: string | null
           secondary_consultant_id?: string | null
+          secondary_tutor?: string | null
           stage_history?: Json | null
           status?: string | null
           student_id?: string
@@ -1462,6 +1467,7 @@ export type Database = {
           target_major_secondary?: string | null
           timezone?: string | null
           track?: string | null
+          tutor_in_charge?: string | null
           updated_at?: string
         }
         Relationships: []

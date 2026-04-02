@@ -54,6 +54,8 @@ interface Student {
   current_gpa: string | null;
   academic_strengths: string | null;
   academic_weaknesses: string | null;
+  tutor_in_charge: string | null;
+  secondary_tutor: string | null;
   google_drive_folder_url: string | null;
 }
 
@@ -166,6 +168,18 @@ const StudentDetail = () => {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">IB Predicted</p>
                 <p className="font-medium">{student.ib_predicted_grade}/45</p>
+              </div>
+            )}
+            {student.tutor_in_charge && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Tutor-in-Charge</p>
+                <p className="font-medium">{student.tutor_in_charge}</p>
+              </div>
+            )}
+            {student.secondary_tutor && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Secondary Tutor</p>
+                <p className="font-medium">{student.secondary_tutor}</p>
               </div>
             )}
           </div>
