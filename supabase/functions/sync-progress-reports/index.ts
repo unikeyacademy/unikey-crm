@@ -233,9 +233,9 @@ serve(async (req) => {
 
     const accessToken = await getAccessToken(user.id, serviceClient);
 
-    // Search for progress reports in the folder
-    const searchQuery = `'${folderId}' in parents and trashed=false and (name contains 'Progress Report' or name contains 'progress report' or name contains 'Consultation' or name contains 'consultation')`;
-    const driveUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQuery)}&fields=files(id,name,mimeType,modifiedTime,webViewLink)&orderBy=modifiedTime desc&pageSize=50`;
+    // List all files in the folder (the filename pattern YYMMDD identifies reports)
+    const searchQuery = `'${folderId}' in parents and trashed=false`;
+    const driveUrl = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQuery)}&fields=files(id,name,mimeType,modifiedTime,webViewLink)&orderBy=name desc&pageSize=100`;
 
     const driveResponse = await fetch(driveUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
