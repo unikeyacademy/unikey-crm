@@ -58,6 +58,8 @@ interface Student {
   tutor_in_charge: string | null;
   secondary_tutor: string | null;
   google_drive_folder_url: string | null;
+  notion_page_id: string | null;
+  notion_notes: string | null;
 }
 
 const StudentDetail = () => {
