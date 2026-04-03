@@ -2,20 +2,53 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Search, Plus, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
+
+const LOCATION_OPTIONS = [
+  "Hong Kong",
+  "United Kingdom",
+  "United States",
+  "Singapore",
+  "Australia",
+  "Canada",
+  "Europe",
+  "Online / Remote",
+];
+
+const SCHOOL_LOCATION_OPTIONS = [
+  "Hong Kong (Day School)",
+  "UK Boarding School",
+  "US Boarding School",
+  "International School (Asia)",
+  "International School (Europe)",
+  "Local School (Hong Kong)",
+  "Other",
+];
 
 const ECADiscovery = () => {
   const [subject, setSubject] = useState("");
   const [interests, setInterests] = useState("");
   const [gradeLevel, setGradeLevel] = useState("");
+  const [studentAge, setStudentAge] = useState("");
+  const [schoolLocation, setSchoolLocation] = useState("");
+  const [preferredLocations, setPreferredLocations] = useState<string[]>([]);
+  const [additionalRequirements, setAdditionalRequirements] = useState("");
   const [discovering, setDiscovering] = useState(false);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [selectedOpps, setSelectedOpps] = useState<Set<number>>(new Set());
+
+  const toggleLocation = (location: string) => {
+    setPreferredLocations((prev) =>
+      prev.includes(location) ? prev.filter((l) => l !== location) : [...prev, location]
+    );
+  };
 
   const handleDiscover = async () => {
     if (!subject) {
@@ -26,7 +59,15 @@ const ECADiscovery = () => {
     setDiscovering(true);
     try {
       const { data, error } = await supabase.functions.invoke('discover-eca-opportunities', {
-        body: { subject, interests, gradeLevel }
+        body: {
+          subject,
+          interests,
+          gradeLevel,
+          studentAge,
+          schoolLocation,
+          preferredLocations,
+          additionalRequirements,
+        }
       });
 
       if (error) throw error;
@@ -76,6 +117,10 @@ const ECADiscovery = () => {
       setSubject("");
       setInterests("");
       setGradeLevel("");
+      setStudentAge("");
+      setSchoolLocation("");
+      setPreferredLocations([]);
+      setAdditionalRequirements("");
     } catch (error) {
       console.error('Bulk add error:', error);
       toast.error("Failed to add opportunities");
@@ -96,33 +141,96 @@ const ECADiscovery = () => {
         <Card>
           <CardHeader>
             <CardTitle>Search Parameters</CardTitle>
-            <CardDescription>Describe the type of opportunities you're looking for</CardDescription>
+            <CardDescription>Provide student details for more targeted results</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Subject Area *</label>
+                <Input
+                  placeholder="e.g., Computer Science, Biology, Mathematics"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Specific Interests</label>
+                <Input
+                  placeholder="e.g., AI/ML, research, environmental science"
+                  value={interests}
+                  onChange={(e) => setInterests(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Grade Level</label>
+                <Input
+                  placeholder="e.g., 9-12, 11"
+                  value={gradeLevel}
+                  onChange={(e) => setGradeLevel(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Student Age</label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 16"
+                  value={studentAge}
+                  onChange={(e) => setStudentAge(e.target.value)}
+                  min={10}
+                  max={20}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Current School Location</label>
+                <Select value={schoolLocation} onValueChange={setSchoolLocation}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Where does the student study?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SCHOOL_LOCATION_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  UK boarding school students may be eligible for additional UK-based programmes
+                </p>
+              </div>
+            </div>
+
             <div>
-              <label className="text-sm font-medium">Subject Area *</label>
-              <Input
-                placeholder="e.g., Computer Science, Biology, Mathematics"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
+              <label className="text-sm font-medium mb-2 block">Preferred Locations</label>
+              <div className="flex flex-wrap gap-2">
+                {LOCATION_OPTIONS.map((loc) => (
+                  <label
+                    key={loc}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-sm transition-colors ${
+                      preferredLocations.includes(loc)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background border-input hover:bg-accent"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={preferredLocations.includes(loc)}
+                      onCheckedChange={() => toggleLocation(loc)}
+                      className="hidden"
+                    />
+                    {loc}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Additional Requirements</label>
+              <Textarea
+                placeholder="e.g., Must be free / low-cost, visa sponsorship needed, student has a research paper in progress, student is a UK citizen, preference for team-based activities..."
+                value={additionalRequirements}
+                onChange={(e) => setAdditionalRequirements(e.target.value)}
+                rows={3}
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Specific Interests (Optional)</label>
-              <Input
-                placeholder="e.g., AI/ML, research, environmental science"
-                value={interests}
-                onChange={(e) => setInterests(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Grade Level (Optional)</label>
-              <Input
-                placeholder="e.g., 9-12, 11"
-                value={gradeLevel}
-                onChange={(e) => setGradeLevel(e.target.value)}
-              />
-            </div>
+
             <Button 
               onClick={handleDiscover} 
               disabled={discovering || !subject}

@@ -12,15 +12,34 @@ serve(async (req) => {
   }
 
   try {
-    const { subject, interests, gradeLevel } = await req.json();
-    console.log('Discovering ECAs for:', { subject, interests, gradeLevel });
+    const { subject, interests, gradeLevel, studentAge, schoolLocation, preferredLocations, additionalRequirements } = await req.json();
+    console.log('Discovering ECAs for:', { subject, interests, gradeLevel, studentAge, schoolLocation, preferredLocations, additionalRequirements });
 
     const PERPLEXITY_API_KEY = Deno.env.get('PERPLEXITY_API_KEY');
     if (!PERPLEXITY_API_KEY) {
       throw new Error('PERPLEXITY_API_KEY not configured');
     }
 
-    const searchPrompt = `Find 8-10 extracurricular opportunities (competitions, programs, summer schools, etc.) for students interested in: ${subject} ${interests ? `with focus on ${interests}` : ''} (Grade ${gradeLevel || '9-12'}).
+    // Build a detailed student profile section for the prompt
+    const profileParts: string[] = [];
+    if (studentAge) profileParts.push(`The student is ${studentAge} years old.`);
+    if (gradeLevel) profileParts.push(`Grade level: ${gradeLevel}.`);
+    if (schoolLocation) {
+      profileParts.push(`The student currently studies at a ${schoolLocation}.`);
+      if (schoolLocation.toLowerCase().includes('uk boarding')) {
+        profileParts.push(`Because the student is at a UK boarding school, include UK-based opportunities they can access locally (e.g. university outreach programmes, regional competitions, school-based research schemes, and programmes that prioritise UK-resident students).`);
+      }
+    }
+    if (preferredLocations && preferredLocations.length > 0) {
+      profileParts.push(`Preferred programme locations: ${preferredLocations.join(', ')}. Prioritise opportunities available in or accessible from these locations.`);
+    }
+    if (additionalRequirements) {
+      profileParts.push(`Additional requirements from the consultant: ${additionalRequirements}`);
+    }
+
+    const studentProfile = profileParts.length > 0 ? `\n\nStudent Profile:\n${profileParts.join('\n')}` : '';
+
+    const searchPrompt = `Find 8-10 extracurricular opportunities (competitions, programs, summer schools, etc.) for students interested in: ${subject} ${interests ? `with focus on ${interests}` : ''}.${studentProfile}
 
 Include a mix of:
 - International competitions
@@ -28,6 +47,8 @@ Include a mix of:
 - Summer programs
 - Online courses
 - Olympiads
+
+IMPORTANT: Only include opportunities the student is actually eligible for based on their age${schoolLocation ? ', school location' : ''} and profile. If an opportunity has age restrictions, verify the student meets them.
 
 For each opportunity, provide the following in valid JSON format:
 - name: Full name of the opportunity
@@ -38,10 +59,10 @@ For each opportunity, provide the following in valid JSON format:
 - time_commitment: Time commitment
 - deadline_date: Deadline in YYYY-MM-DD format if known
 - deadline_type: One of "annual", "rolling", "one-time"
-- eligibility: Eligibility requirements
+- eligibility: Eligibility requirements including age range and location restrictions
 - best_for: Array of who this is best for
 - website: Official website URL
-- internal_notes: Key highlights and notes
+- internal_notes: Key highlights and why this suits the student's specific profile
 
 Return a JSON object with an "opportunities" array containing these objects.`;
 
@@ -58,7 +79,7 @@ Return a JSON object with an "opportunities" array containing these objects.`;
         messages: [
           {
             role: 'system',
-            content: `You are an expert at discovering extracurricular activities, competitions, and academic programs for students. Find real, verifiable opportunities with actual websites. Focus on prestigious and well-known programs. Always respond with valid JSON only, no markdown.`
+            content: `You are an expert at discovering extracurricular activities, competitions, and academic programs for students. Find real, verifiable opportunities with actual websites. Focus on prestigious and well-known programs. Pay close attention to the student's age, school location, and preferred programme locations to ensure all suggestions are genuinely accessible and eligible for them. Always respond with valid JSON only, no markdown.`
           },
           {
             role: 'user',
