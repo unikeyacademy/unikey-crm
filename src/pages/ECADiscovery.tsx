@@ -185,7 +185,7 @@ const ECADiscovery = () => {
   const getVerificationBadge = (opp: any) => {
     if (!opp.verification_status) return null;
     if (opp.verification_status === 'verified') {
-      return <Badge className="bg-green-600 text-white">✓ Verified</Badge>;
+      return <Badge className="bg-success text-success-foreground">✓ Verified</Badge>;
     }
     if (opp.verification_status === 'flagged') {
       return <Badge variant="destructive">⚠ Flagged</Badge>;
