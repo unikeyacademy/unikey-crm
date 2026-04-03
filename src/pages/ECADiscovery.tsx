@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Search, Plus, ExternalLink } from "lucide-react";
+import { Sparkles, Search, Plus, ExternalLink, ShieldCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import DashboardLayout from "@/components/DashboardLayout";
 
@@ -32,6 +32,19 @@ const SCHOOL_LOCATION_OPTIONS = [
   "Other",
 ];
 
+const CATEGORY_OPTIONS = [
+  "Competition",
+  "Research Program",
+  "Summer Program",
+  "Olympiad",
+  "Conference",
+  "Workshop",
+  "Internship",
+  "Publication",
+  "Online Course",
+  "Leadership Program",
+];
+
 const ECADiscovery = () => {
   const [subject, setSubject] = useState("");
   const [interests, setInterests] = useState("");
@@ -39,14 +52,22 @@ const ECADiscovery = () => {
   const [studentAge, setStudentAge] = useState("");
   const [schoolLocation, setSchoolLocation] = useState("");
   const [preferredLocations, setPreferredLocations] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [additionalRequirements, setAdditionalRequirements] = useState("");
   const [discovering, setDiscovering] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [selectedOpps, setSelectedOpps] = useState<Set<number>>(new Set());
 
   const toggleLocation = (location: string) => {
     setPreferredLocations((prev) =>
       prev.includes(location) ? prev.filter((l) => l !== location) : [...prev, location]
+    );
+  };
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
     );
   };
 
@@ -57,6 +78,7 @@ const ECADiscovery = () => {
     }
 
     setDiscovering(true);
+    setOpportunities([]);
     try {
       const { data, error } = await supabase.functions.invoke('discover-eca-opportunities', {
         body: {
@@ -66,6 +88,7 @@ const ECADiscovery = () => {
           studentAge,
           schoolLocation,
           preferredLocations,
+          selectedCategories,
           additionalRequirements,
         }
       });
@@ -74,7 +97,7 @@ const ECADiscovery = () => {
 
       if (data.success && data.opportunities?.length > 0) {
         setOpportunities(data.opportunities);
-        toast.success(`Found ${data.opportunities.length} opportunities!`);
+        toast.success(`Found ${data.opportunities.length} opportunities! You can now verify them.`);
       } else {
         toast.info("No opportunities found. Try different search terms.");
       }
@@ -83,6 +106,34 @@ const ECADiscovery = () => {
       toast.error("Failed to discover opportunities");
     } finally {
       setDiscovering(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (opportunities.length === 0) return;
+
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('discover-eca-opportunities', {
+        body: {
+          action: 'verify',
+          opportunities,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success && data.opportunities?.length > 0) {
+        setOpportunities(data.opportunities);
+        const verified = data.opportunities.filter((o: any) => o.verification_status === 'verified').length;
+        const flagged = data.opportunities.filter((o: any) => o.verification_status === 'flagged').length;
+        toast.success(`Verification complete: ${verified} verified, ${flagged} flagged for review`);
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error("Failed to verify opportunities");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -97,7 +148,10 @@ const ECADiscovery = () => {
   };
 
   const handleBulkAdd = async () => {
-    const selectedOppsList = Array.from(selectedOpps).map(i => opportunities[i]);
+    const selectedOppsList = Array.from(selectedOpps).map(i => {
+      const { verification_status, verification_notes, ...opp } = opportunities[i];
+      return opp;
+    });
     
     if (selectedOppsList.length === 0) {
       toast.error("Please select opportunities to add");
@@ -120,11 +174,23 @@ const ECADiscovery = () => {
       setStudentAge("");
       setSchoolLocation("");
       setPreferredLocations([]);
+      setSelectedCategories([]);
       setAdditionalRequirements("");
     } catch (error) {
       console.error('Bulk add error:', error);
       toast.error("Failed to add opportunities");
     }
+  };
+
+  const getVerificationBadge = (opp: any) => {
+    if (!opp.verification_status) return null;
+    if (opp.verification_status === 'verified') {
+      return <Badge className="bg-success text-success-foreground">✓ Verified</Badge>;
+    }
+    if (opp.verification_status === 'flagged') {
+      return <Badge variant="destructive">⚠ Flagged</Badge>;
+    }
+    return <Badge variant="secondary">Unverified</Badge>;
   };
 
   return (
@@ -135,7 +201,7 @@ const ECADiscovery = () => {
             <Sparkles className="h-8 w-8 text-primary" />
             AI ECA Discovery
           </h1>
-          <p className="text-muted-foreground">Discover new opportunities using AI-powered search</p>
+          <p className="text-muted-foreground">Discover new opportunities using AI-powered search with deep reasoning</p>
         </div>
 
         <Card>
@@ -199,6 +265,30 @@ const ECADiscovery = () => {
             </div>
 
             <div>
+              <label className="text-sm font-medium mb-2 block">Opportunity Categories</label>
+              <p className="text-xs text-muted-foreground mb-2">Select specific types to focus the search, or leave empty for all types</p>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORY_OPTIONS.map((cat) => (
+                  <label
+                    key={cat}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-sm transition-colors ${
+                      selectedCategories.includes(cat)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-background border-input hover:bg-accent"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={selectedCategories.includes(cat)}
+                      onCheckedChange={() => toggleCategory(cat)}
+                      className="hidden"
+                    />
+                    {cat}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
               <label className="text-sm font-medium mb-2 block">Preferred Locations</label>
               <div className="flex flex-wrap gap-2">
                 {LOCATION_OPTIONS.map((loc) => (
@@ -236,38 +326,55 @@ const ECADiscovery = () => {
               disabled={discovering || !subject}
               className="w-full"
             >
-              <Search className="mr-2 h-4 w-4" />
-              {discovering ? "Discovering..." : "Discover Opportunities"}
+              {discovering ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deep Search in Progress (may take 30-60s)...</>
+              ) : (
+                <><Search className="mr-2 h-4 w-4" /> Discover Opportunities</>
+              )}
             </Button>
           </CardContent>
         </Card>
 
         {opportunities.length > 0 && (
           <>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-2">
               <p className="text-sm text-muted-foreground">
                 {selectedOpps.size} of {opportunities.length} selected
               </p>
-              <Button 
-                onClick={handleBulkAdd}
-                disabled={selectedOpps.size === 0}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Selected to Database
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleVerify}
+                  disabled={verifying}
+                >
+                  {verifying ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
+                  ) : (
+                    <><ShieldCheck className="mr-2 h-4 w-4" /> Verify All</>
+                  )}
+                </Button>
+                <Button 
+                  onClick={handleBulkAdd}
+                  disabled={selectedOpps.size === 0}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Selected to Database
+                </Button>
+              </div>
             </div>
 
             <div className="grid gap-4">
               {opportunities.map((opp, index) => (
-                <Card key={index} className="relative">
-                  <div className="absolute top-4 right-4">
+                <Card key={index} className={`relative ${opp.verification_status === 'flagged' ? 'border-destructive/50' : ''}`}>
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    {getVerificationBadge(opp)}
                     <Checkbox
                       checked={selectedOpps.has(index)}
                       onCheckedChange={() => toggleSelection(index)}
                     />
                   </div>
                   <CardHeader>
-                    <div className="space-y-2 pr-12">
+                    <div className="space-y-2 pr-24">
                       <CardTitle className="text-lg">{opp.name}</CardTitle>
                       <div className="flex flex-wrap gap-2">
                         <Badge variant="secondary">{opp.type}</Badge>
@@ -309,6 +416,12 @@ const ECADiscovery = () => {
                       <div>
                         <span className="text-sm font-medium">Notes:</span>
                         <p className="text-sm text-muted-foreground">{opp.internal_notes}</p>
+                      </div>
+                    )}
+                    {opp.verification_notes && (
+                      <div className="bg-muted/50 p-2 rounded text-sm">
+                        <span className="font-medium">Verification: </span>
+                        <span className="text-muted-foreground">{opp.verification_notes}</span>
                       </div>
                     )}
                     {opp.website && (
