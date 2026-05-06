@@ -158,20 +158,28 @@ const Dashboard = () => {
 
       const studentIds = students.map(s => s.id);
 
-      // Fetch last consultation per student
+      // Fetch last consultation per student (Drive consultations)
       const { data: consultations } = await supabase
         .from("consultations")
         .select("student_id, consultation_date")
         .in("student_id", studentIds)
         .order("consultation_date", { ascending: false });
 
-      // Fetch overdue tasks per student
+      // Also include Notion session reports
+      const { data: notionSessions } = await supabase
+        .from("notion_session_reports")
+        .select("student_id, session_date")
+        .in("student_id", studentIds)
+        .not("session_date", "is", null);
+
+      // Fetch overdue tasks per student (with titles)
       const { data: overdueTasks } = await supabase
         .from("tasks")
-        .select("student_id")
+        .select("student_id, title, due_date")
         .in("student_id", studentIds)
         .lt("due_date", now.toISOString())
-        .neq("status", "completed");
+        .neq("status", "completed")
+        .order("due_date", { ascending: true });
 
       // Fetch approaching deadlines (next 14 days)
       const twoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
@@ -180,63 +188,75 @@ const Dashboard = () => {
         .select("student_id, university_name, deadline_date")
         .in("student_id", studentIds)
         .gte("deadline_date", now.toISOString().split("T")[0])
-        .lte("deadline_date", twoWeeks.toISOString().split("T")[0]);
+        .lte("deadline_date", twoWeeks.toISOString().split("T")[0])
+        .order("deadline_date", { ascending: true });
 
-      // Build last consultation map
+      // Build last consultation map (merge Drive + Notion)
       const lastConsultationMap = new Map<string, Date>();
       consultations?.forEach(c => {
-        if (!lastConsultationMap.has(c.student_id)) {
-          lastConsultationMap.set(c.student_id, new Date(c.consultation_date));
-        }
+        const d = new Date(c.consultation_date);
+        const existing = lastConsultationMap.get(c.student_id);
+        if (!existing || d > existing) lastConsultationMap.set(c.student_id, d);
+      });
+      notionSessions?.forEach(c => {
+        if (!c.student_id || !c.session_date) return;
+        const d = new Date(c.session_date);
+        const existing = lastConsultationMap.get(c.student_id);
+        if (!existing || d > existing) lastConsultationMap.set(c.student_id, d);
       });
 
-      // Overdue count per student
-      const overdueMap = new Map<string, number>();
+      // Overdue tasks per student (with titles)
+      const overdueMap = new Map<string, { title: string; due_date: string }[]>();
       overdueTasks?.forEach(t => {
-        if (t.student_id) overdueMap.set(t.student_id, (overdueMap.get(t.student_id) || 0) + 1);
+        if (!t.student_id) return;
+        const arr = overdueMap.get(t.student_id) || [];
+        arr.push({ title: t.title, due_date: t.due_date });
+        overdueMap.set(t.student_id, arr);
       });
 
       // Approaching deadlines per student
-      const deadlineMap = new Map<string, string[]>();
+      const deadlineMap = new Map<string, { university: string; date: string }[]>();
       approachingDeadlines?.forEach(d => {
         const arr = deadlineMap.get(d.student_id) || [];
-        arr.push(`${d.university_name} (${new Date(d.deadline_date!).toLocaleDateString()})`);
+        arr.push({ university: d.university_name, date: d.deadline_date! });
         deadlineMap.set(d.student_id, arr);
       });
 
       const alerts: StudentAlert[] = [];
+      const fmtDate = (d: Date | string) => new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
       students.forEach(s => {
         const studentAlerts: string[] = [];
         let worstLevel: "green" | "yellow" | "red" = "green";
 
-        // Check days since last meeting
         const lastMeeting = lastConsultationMap.get(s.id);
         if (!lastMeeting) {
-          studentAlerts.push("No consultations recorded");
+          studentAlerts.push("No consultations recorded (Drive or Notion)");
           worstLevel = "yellow";
         } else {
           const daysSince = Math.floor((now.getTime() - lastMeeting.getTime()) / (1000 * 60 * 60 * 24));
           if (daysSince > 30) {
-            studentAlerts.push(`${daysSince} days since last meeting`);
+            studentAlerts.push(`${daysSince} days since last meeting (last: ${fmtDate(lastMeeting)})`);
             worstLevel = "red";
           } else if (daysSince > 14) {
-            studentAlerts.push(`${daysSince} days since last meeting`);
+            studentAlerts.push(`${daysSince} days since last meeting (last: ${fmtDate(lastMeeting)})`);
             worstLevel = worstLevel === "green" ? "yellow" : worstLevel;
           }
         }
 
-        // Check overdue items
-        const overdueCount = overdueMap.get(s.id) || 0;
-        if (overdueCount > 0) {
-          studentAlerts.push(`${overdueCount} overdue task${overdueCount > 1 ? "s" : ""}`);
+        const overdue = overdueMap.get(s.id) || [];
+        if (overdue.length > 0) {
+          const preview = overdue.slice(0, 3).map(t => `"${t.title}" (due ${fmtDate(t.due_date)})`).join(", ");
+          const extra = overdue.length > 3 ? ` +${overdue.length - 3} more` : "";
+          studentAlerts.push(`${overdue.length} overdue task${overdue.length > 1 ? "s" : ""}: ${preview}${extra}`);
           worstLevel = "red";
         }
 
-        // Check approaching deadlines
         const deadlines = deadlineMap.get(s.id) || [];
         if (deadlines.length > 0) {
-          studentAlerts.push(`${deadlines.length} deadline${deadlines.length > 1 ? "s" : ""} in next 14 days`);
+          const preview = deadlines.slice(0, 3).map(d => `${d.university} (${fmtDate(d.date)})`).join(", ");
+          const extra = deadlines.length > 3 ? ` +${deadlines.length - 3} more` : "";
+          studentAlerts.push(`Upcoming deadline${deadlines.length > 1 ? "s" : ""}: ${preview}${extra}`);
           worstLevel = worstLevel === "green" ? "yellow" : worstLevel;
         }
 
