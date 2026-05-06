@@ -109,7 +109,7 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
       toast.success(data?.message || "Sync complete");
 
       if (data?.imported > 0) {
-        fetchConsultations();
+        fetchAll();
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sync progress reports");
