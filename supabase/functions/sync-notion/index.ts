@@ -287,9 +287,12 @@ serve(async (req) => {
             null;
 
           const summary =
+            getRich(props["Meeting Summary"]) ||
+            getRich(props["AI Summary"]) ||
+            getRich(props["Key Topics Covered"]) ||
             getRich(props["Summary"]) ||
-            getRich(props["Notes"]) ||
             title;
+
 
           const row = {
             notion_page_id: page.id,
