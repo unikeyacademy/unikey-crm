@@ -1121,6 +1121,45 @@ export type Database = {
           },
         ]
       }
+      student_flags: {
+        Row: {
+          category: string
+          created_at: string
+          details: Json | null
+          expires_at: string | null
+          flag_level: string
+          id: string
+          reason: string
+          source: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          details?: Json | null
+          expires_at?: string | null
+          flag_level: string
+          id?: string
+          reason: string
+          source?: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          details?: Json | null
+          expires_at?: string | null
+          flag_level?: string
+          id?: string
+          reason?: string
+          source?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       student_interviews: {
         Row: {
           created_at: string
