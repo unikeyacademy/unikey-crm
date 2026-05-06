@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, FolderSync, Loader2, ExternalLink } from "lucide-react";
+import { Calendar, Clock, FolderSync, Loader2, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
 import AddConsultationDialog from "./AddConsultationDialog";
 
@@ -21,6 +21,19 @@ interface Consultation {
   attendees: string[] | null;
   key_decisions: string | null;
 }
+
+interface NotionReport {
+  id: string;
+  session_date: string | null;
+  session_type: string | null;
+  consultant_name: string | null;
+  summary: string | null;
+  notion_url: string | null;
+}
+
+type TimelineItem =
+  | { source: "drive"; date: string; data: Consultation }
+  | { source: "notion"; date: string; data: NotionReport };
 
 interface StudentConsultationsTabProps {
   studentId: string;
