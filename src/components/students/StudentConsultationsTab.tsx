@@ -144,7 +144,7 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
               {syncing ? "Syncing..." : "Sync from Drive"}
             </Button>
           )}
-          <AddConsultationDialog studentId={studentId} onAdded={fetchConsultations} />
+          <AddConsultationDialog studentId={studentId} onAdded={fetchAll} />
         </div>
       </div>
 
