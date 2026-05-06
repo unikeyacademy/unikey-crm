@@ -2,3 +2,6 @@ project_id = "qgtaqimxuqogkrkkredn"
 
 [functions.hermes-ingest]
 verify_jwt = false
+
+[functions.sync-notion]
+verify_jwt = false
