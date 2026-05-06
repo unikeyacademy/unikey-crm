@@ -29,7 +29,15 @@ interface NotionReport {
   consultant_name: string | null;
   summary: string | null;
   notion_url: string | null;
+  raw_properties: any;
 }
+
+const extractRichText = (prop: any): string | null => {
+  if (!prop) return null;
+  const arr = prop.rich_text || prop.title;
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  return arr.map((t: any) => t.plain_text || "").join("").trim() || null;
+};
 
 type TimelineItem =
   | { source: "drive"; date: string; data: Consultation }
