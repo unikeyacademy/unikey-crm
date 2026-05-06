@@ -127,7 +127,38 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    // ---------- 1. CONTACTS ----------
+    // Debug mode: return raw property names + sample from first page
+    const url = new URL(req.url);
+    if (url.searchParams.get("debug") === "1") {
+      const data = await notionFetch(`/databases/${CONTACTS_DB}/query`, NOTION_TOKEN, {
+        method: "POST",
+        body: JSON.stringify({ page_size: 1 }),
+      });
+      const sample: any = {};
+      const page = data.results?.[0];
+      if (page) {
+        for (const [k, v] of Object.entries(page.properties)) {
+          sample[k] = { type: (v as any).type, value: (v as any)[(v as any).type] };
+        }
+      }
+      let sessSample: any = {};
+      if (SESSIONS_DB) {
+        const sd = await notionFetch(`/databases/${SESSIONS_DB}/query`, NOTION_TOKEN, {
+          method: "POST",
+          body: JSON.stringify({ page_size: 1 }),
+        });
+        const sp = sd.results?.[0];
+        if (sp) {
+          for (const [k, v] of Object.entries(sp.properties)) {
+            sessSample[k] = { type: (v as any).type, value: (v as any)[(v as any).type] };
+          }
+        }
+      }
+      return new Response(JSON.stringify({ contacts: sample, sessions: sessSample }, null, 2), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const contactPages = await queryAllPages(CONTACTS_DB, NOTION_TOKEN);
     stats.contacts_seen = contactPages.length;
 
