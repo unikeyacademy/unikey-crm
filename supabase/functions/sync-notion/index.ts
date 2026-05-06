@@ -127,34 +127,19 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    // Debug mode: return raw property names + sample from first page
+    // Debug mode
     const url = new URL(req.url);
-    if (url.searchParams.get("debug") === "1") {
-      const data = await notionFetch(`/databases/${CONTACTS_DB}/query`, NOTION_TOKEN, {
-        method: "POST",
-        body: JSON.stringify({ page_size: 1 }),
-      });
-      const sample: any = {};
-      const page = data.results?.[0];
-      if (page) {
-        for (const [k, v] of Object.entries(page.properties)) {
-          sample[k] = { type: (v as any).type, value: (v as any)[(v as any).type] };
-        }
+    if (url.searchParams.get("debug") === "values") {
+      const all = await queryAllPages(CONTACTS_DB, NOTION_TOKEN);
+      const counts: Record<string, number> = {};
+      let active = 0;
+      for (const p of all) {
+        const props = p.properties || {};
+        if (getCheckbox(props["Active"])) active++;
+        const s = getSelect(props["Application Status"]) || "(null)";
+        counts[s] = (counts[s] || 0) + 1;
       }
-      let sessSample: any = {};
-      if (SESSIONS_DB) {
-        const sd = await notionFetch(`/databases/${SESSIONS_DB}/query`, NOTION_TOKEN, {
-          method: "POST",
-          body: JSON.stringify({ page_size: 1 }),
-        });
-        const sp = sd.results?.[0];
-        if (sp) {
-          for (const [k, v] of Object.entries(sp.properties)) {
-            sessSample[k] = { type: (v as any).type, value: (v as any)[(v as any).type] };
-          }
-        }
-      }
-      return new Response(JSON.stringify({ contacts: sample, sessions: sessSample }, null, 2), {
+      return new Response(JSON.stringify({ total: all.length, active_count: active, status_counts: counts }, null, 2), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
