@@ -208,7 +208,6 @@ serve(async (req) => {
           curriculum: getSelect(props["Curriculum"]),
           consultation_programme: getSelect(props["Program"]),
           lead_source: getSelect(props["Referrer"]),
-          status: appStatus,
           google_drive_folder_url: getUrl(props["Google Drive Link"]),
           application_cycle: applicationCycle,
           quotation: getNumber(props["Quotation"])?.toString() ?? null,
