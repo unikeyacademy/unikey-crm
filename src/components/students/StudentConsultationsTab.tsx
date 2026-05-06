@@ -41,25 +41,35 @@ interface StudentConsultationsTabProps {
 
 const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) => {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [notionReports, setNotionReports] = useState<NotionReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [driveUrl, setDriveUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchConsultations();
+    fetchAll();
     fetchDriveUrl();
   }, [studentId]);
 
-  const fetchConsultations = async () => {
+  const fetchAll = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("consultations")
-        .select("*")
-        .eq("student_id", studentId)
-        .order("consultation_date", { ascending: false });
-
-      if (error) throw error;
-      setConsultations(data || []);
+      const [c, n] = await Promise.all([
+        supabase
+          .from("consultations")
+          .select("*")
+          .eq("student_id", studentId)
+          .order("consultation_date", { ascending: false }),
+        supabase
+          .from("notion_session_reports")
+          .select("id, session_date, session_type, consultant_name, summary, notion_url")
+          .eq("student_id", studentId)
+          .order("session_date", { ascending: false }),
+      ]);
+      if (c.error) throw c.error;
+      if (n.error) throw n.error;
+      setConsultations((c.data as any) || []);
+      setNotionReports((n.data as any) || []);
     } catch (error: any) {
       toast.error("Error loading consultations");
       console.error(error);
