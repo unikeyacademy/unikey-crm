@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, FolderSync, Loader2, ExternalLink } from "lucide-react";
+import { Calendar, Clock, FolderSync, Loader2, ExternalLink, FileText } from "lucide-react";
 import { toast } from "sonner";
 import AddConsultationDialog from "./AddConsultationDialog";
 
@@ -22,31 +22,54 @@ interface Consultation {
   key_decisions: string | null;
 }
 
+interface NotionReport {
+  id: string;
+  session_date: string | null;
+  session_type: string | null;
+  consultant_name: string | null;
+  summary: string | null;
+  notion_url: string | null;
+}
+
+type TimelineItem =
+  | { source: "drive"; date: string; data: Consultation }
+  | { source: "notion"; date: string; data: NotionReport };
+
 interface StudentConsultationsTabProps {
   studentId: string;
 }
 
 const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) => {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [notionReports, setNotionReports] = useState<NotionReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [driveUrl, setDriveUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchConsultations();
+    fetchAll();
     fetchDriveUrl();
   }, [studentId]);
 
-  const fetchConsultations = async () => {
+  const fetchAll = async () => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("consultations")
-        .select("*")
-        .eq("student_id", studentId)
-        .order("consultation_date", { ascending: false });
-
-      if (error) throw error;
-      setConsultations(data || []);
+      const [c, n] = await Promise.all([
+        supabase
+          .from("consultations")
+          .select("*")
+          .eq("student_id", studentId)
+          .order("consultation_date", { ascending: false }),
+        supabase
+          .from("notion_session_reports")
+          .select("id, session_date, session_type, consultant_name, summary, notion_url")
+          .eq("student_id", studentId)
+          .order("session_date", { ascending: false }),
+      ]);
+      if (c.error) throw c.error;
+      if (n.error) throw n.error;
+      setConsultations((c.data as any) || []);
+      setNotionReports((n.data as any) || []);
     } catch (error: any) {
       toast.error("Error loading consultations");
       console.error(error);
@@ -86,7 +109,7 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
       toast.success(data?.message || "Sync complete");
 
       if (data?.imported > 0) {
-        fetchConsultations();
+        fetchAll();
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sync progress reports");
@@ -121,7 +144,7 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
               {syncing ? "Syncing..." : "Sync from Drive"}
             </Button>
           )}
-          <AddConsultationDialog studentId={studentId} onAdded={fetchConsultations} />
+          <AddConsultationDialog studentId={studentId} onAdded={fetchAll} />
         </div>
       </div>
 
@@ -132,139 +155,206 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
             <p className="text-muted-foreground">Loading consultations...</p>
           </CardContent>
         </Card>
-      ) : consultations.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center space-y-3">
-            <p className="text-muted-foreground">
-              No consultations logged yet.
-            </p>
-            {driveUrl ? (
-              <p className="text-sm text-muted-foreground">
-                Click "Sync from Drive" to import progress reports, or "Add Consultation" to log one manually.
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Link a Google Drive folder in the Profile tab to sync progress reports, or add one manually.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {consultations.map((consultation) => (
-            <Card key={consultation.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-lg">
-                        {consultation.consultation_type}
-                      </CardTitle>
-                      {isDriveLink(consultation.meeting_link) && (
-                        <Badge variant="outline" className="text-xs gap-1">
-                          <FolderSync className="h-3 w-3" />
-                          From Drive
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(consultation.consultation_date).toLocaleDateString()}
-                      </div>
-                      {consultation.duration_minutes && (
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {consultation.duration_minutes} mins
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {isDriveLink(consultation.meeting_link) && (
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={consultation.meeting_link!} target="_blank" rel="noopener noreferrer" className="gap-1">
-                        <ExternalLink className="h-3 w-3" />
-                        View Report
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {consultation.topics_discussed && consultation.topics_discussed.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Topics Discussed</p>
-                    <div className="flex flex-wrap gap-2">
-                      {consultation.topics_discussed.map((topic, index) => (
-                        <Badge key={index} variant="secondary">
-                          {topic}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+      ) : (() => {
+        const items: TimelineItem[] = [
+          ...consultations.map((c) => ({
+            source: "drive" as const,
+            date: c.consultation_date,
+            data: c,
+          })),
+          ...notionReports.map((n) => ({
+            source: "notion" as const,
+            date: n.session_date || "",
+            data: n,
+          })),
+        ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
-                {consultation.notes && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Notes</p>
-                    <p className="text-sm whitespace-pre-wrap">{consultation.notes}</p>
-                  </div>
-                )}
-
-                {consultation.action_items && consultation.action_items.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Action Items</p>
-                    <ul className="list-disc list-inside space-y-1">
-                      {consultation.action_items.map((item, index) => (
-                        <li key={index} className="text-sm">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {consultation.next_steps && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Next Steps</p>
-                    <p className="text-sm">{consultation.next_steps}</p>
-                  </div>
-                )}
-
-                {consultation.attendees && consultation.attendees.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Attendees</p>
-                    <div className="flex flex-wrap gap-1">
-                      {consultation.attendees.map((a, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">{a}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {consultation.key_decisions && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Key Decisions</p>
-                    <p className="text-sm">{consultation.key_decisions}</p>
-                  </div>
-                )}
-
-                {consultation.meeting_link && !isDriveLink(consultation.meeting_link) && (
-                  <div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(consultation.meeting_link!, "_blank")}
-                    >
-                      Open Meeting Link
-                    </Button>
-                  </div>
+        if (items.length === 0) {
+          return (
+            <Card>
+              <CardContent className="py-12 text-center space-y-3">
+                <p className="text-muted-foreground">No consultations logged yet.</p>
+                {driveUrl ? (
+                  <p className="text-sm text-muted-foreground">
+                    Click "Sync from Drive" to import progress reports, or "Add Consultation" to log one manually.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Link a Google Drive folder in the Profile tab to sync progress reports, or add one manually.
+                  </p>
                 )}
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          );
+        }
+
+        return (
+          <div className="space-y-4">
+            {items.map((item) => {
+              if (item.source === "notion") {
+                const n = item.data;
+                return (
+                  <Card key={`notion-${n.id}`}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-lg">
+                              {n.session_type || "Session Report"}
+                            </CardTitle>
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <FileText className="h-3 w-3" />
+                              From Notion
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            {n.session_date && (
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(n.session_date).toLocaleDateString()}
+                              </div>
+                            )}
+                            {n.consultant_name && (
+                              <span>{n.consultant_name}</span>
+                            )}
+                          </div>
+                        </div>
+                        {n.notion_url && (
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={n.notion_url} target="_blank" rel="noopener noreferrer" className="gap-1">
+                              <ExternalLink className="h-3 w-3" />
+                              View in Notion
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    {n.summary && (
+                      <CardContent>
+                        <p className="text-sm whitespace-pre-wrap">{n.summary}</p>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              }
+
+              const consultation = item.data;
+              return (
+                <Card key={`drive-${consultation.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg">
+                            {consultation.consultation_type}
+                          </CardTitle>
+                          {isDriveLink(consultation.meeting_link) && (
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <FolderSync className="h-3 w-3" />
+                              From Drive
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {new Date(consultation.consultation_date).toLocaleDateString()}
+                          </div>
+                          {consultation.duration_minutes && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-4 h-4" />
+                              {consultation.duration_minutes} mins
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {isDriveLink(consultation.meeting_link) && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={consultation.meeting_link!} target="_blank" rel="noopener noreferrer" className="gap-1">
+                            <ExternalLink className="h-3 w-3" />
+                            View Report
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {consultation.topics_discussed && consultation.topics_discussed.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Topics Discussed</p>
+                        <div className="flex flex-wrap gap-2">
+                          {consultation.topics_discussed.map((topic, index) => (
+                            <Badge key={index} variant="secondary">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {consultation.notes && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Notes</p>
+                        <p className="text-sm whitespace-pre-wrap">{consultation.notes}</p>
+                      </div>
+                    )}
+
+                    {consultation.action_items && consultation.action_items.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Action Items</p>
+                        <ul className="list-disc list-inside space-y-1">
+                          {consultation.action_items.map((item, index) => (
+                            <li key={index} className="text-sm">
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {consultation.next_steps && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Next Steps</p>
+                        <p className="text-sm">{consultation.next_steps}</p>
+                      </div>
+                    )}
+
+                    {consultation.attendees && consultation.attendees.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Attendees</p>
+                        <div className="flex flex-wrap gap-1">
+                          {consultation.attendees.map((a, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">{a}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {consultation.key_decisions && (
+                      <div>
+                        <p className="text-sm font-medium mb-2">Key Decisions</p>
+                        <p className="text-sm">{consultation.key_decisions}</p>
+                      </div>
+                    )}
+
+                    {consultation.meeting_link && !isDriveLink(consultation.meeting_link) && (
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(consultation.meeting_link!, "_blank")}
+                        >
+                          Open Meeting Link
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 };
