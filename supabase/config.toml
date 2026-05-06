@@ -1,34 +1,4 @@
 project_id = "qgtaqimxuqogkrkkredn"
 
-[functions.google-oauth]
-verify_jwt = true
-
-[functions.sync-calendar]
-verify_jwt = true
-
-[functions.create-meet-link]
-verify_jwt = true
-
-[functions.send-email]
-verify_jwt = true
-
-[functions.process-scheduled-emails]
+[functions.hermes-ingest]
 verify_jwt = false
-
-[functions.create-email-schedule]
-verify_jwt = true
-
-[functions.suggest-ecas]
-verify_jwt = true
-
-[functions.enrich-eca-opportunity]
-verify_jwt = true
-
-[functions.discover-eca-opportunities]
-verify_jwt = true
-
-[functions.monitor-eca-updates]
-verify_jwt = true
-
-[functions.analyze-eca-gaps]
-verify_jwt = true
