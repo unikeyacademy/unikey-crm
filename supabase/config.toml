@@ -1,2 +1,4 @@
+project_id = "qgtaqimxuqogkrkkredn"
+
 [functions.hermes-ingest]
 verify_jwt = false
