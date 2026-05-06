@@ -70,7 +70,7 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
           .order("consultation_date", { ascending: false }),
         supabase
           .from("notion_session_reports")
-          .select("id, session_date, session_type, consultant_name, summary, notion_url")
+          .select("id, session_date, session_type, consultant_name, summary, notion_url, raw_properties")
           .eq("student_id", studentId)
           .order("session_date", { ascending: false }),
       ]);
