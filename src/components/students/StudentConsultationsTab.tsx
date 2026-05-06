@@ -237,11 +237,40 @@ const StudentConsultationsTab = ({ studentId }: StudentConsultationsTabProps) =>
                         )}
                       </div>
                     </CardHeader>
-                    {n.summary && (
-                      <CardContent>
-                        <p className="text-sm whitespace-pre-wrap">{n.summary}</p>
-                      </CardContent>
-                    )}
+                    {(() => {
+                      const nextFocus = extractRichText(n.raw_properties?.["Next Session Focus"]);
+                      const actionItems = extractRichText(n.raw_properties?.["Action Items"]);
+                      const keyTopics = extractRichText(n.raw_properties?.["Key Topics Covered"]);
+                      if (!n.summary && !nextFocus && !actionItems && !keyTopics) return null;
+                      return (
+                        <CardContent className="space-y-4">
+                          {n.summary && (
+                            <div>
+                              <p className="text-sm font-medium mb-2">Summary</p>
+                              <p className="text-sm whitespace-pre-wrap">{n.summary}</p>
+                            </div>
+                          )}
+                          {keyTopics && (
+                            <div>
+                              <p className="text-sm font-medium mb-2">Key Topics Covered</p>
+                              <p className="text-sm whitespace-pre-wrap">{keyTopics}</p>
+                            </div>
+                          )}
+                          {actionItems && (
+                            <div>
+                              <p className="text-sm font-medium mb-2">Action Items</p>
+                              <p className="text-sm whitespace-pre-wrap">{actionItems}</p>
+                            </div>
+                          )}
+                          {nextFocus && (
+                            <div>
+                              <p className="text-sm font-medium mb-2">Next Session Focus</p>
+                              <p className="text-sm whitespace-pre-wrap">{nextFocus}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      );
+                    })()}
                   </Card>
                 );
               }
