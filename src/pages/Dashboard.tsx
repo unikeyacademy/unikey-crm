@@ -322,17 +322,24 @@ const Dashboard = () => {
               {studentAlerts.slice(0, 10).map((alert) => (
                 <div
                   key={alert.studentId}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                  className="flex items-start justify-between gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                   onClick={() => navigate(`/students/${alert.studentId}`)}
                 >
-                  <div className="flex items-center gap-3">
-                    {healthIcon(alert.health)}
-                    <div>
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="mt-0.5">{healthIcon(alert.health)}</div>
+                    <div className="flex-1 min-w-0">
                       <p className="font-medium">{alert.studentName}</p>
-                      <p className="text-xs text-muted-foreground">{alert.alerts.join(" • ")}</p>
+                      <ul className="mt-1 space-y-0.5">
+                        {alert.alerts.map((a, i) => (
+                          <li key={i} className="text-xs text-muted-foreground flex gap-2">
+                            <span className="text-muted-foreground/60">•</span>
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                  {healthBadge(alert.health)}
+                  <div className="shrink-0">{healthBadge(alert.health)}</div>
                 </div>
               ))}
             </div>
