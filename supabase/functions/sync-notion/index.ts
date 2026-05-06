@@ -197,7 +197,6 @@ serve(async (req) => {
         const { first, last } = splitName(cleanName);
         const yearOfEntry = getNumber(props["Year of Entry"]);
         const applicationCycle = yearOfEntry ? String(yearOfEntry) : null;
-        const appStatus = getSelect(props["Application Status"]);
 
         const update: Record<string, any> = {
           notion_page_id: page.id,
