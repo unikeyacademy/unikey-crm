@@ -166,31 +166,24 @@ serve(async (req) => {
     for (const page of contactPages) {
       try {
         const props = page.properties || {};
-        // Find a sensible title field — Notion always has exactly one title prop
-        let titleProp: any = null;
-        for (const k of Object.keys(props)) {
-          if (props[k]?.type === "title") { titleProp = props[k]; break; }
-        }
-        const fullName = titleProp ? getTitle(titleProp) : "";
-        if (!fullName) continue;
+        const fullNameRaw = getTitle(props["Name"]);
+        if (!fullNameRaw) continue;
 
-        // Identify "signed" rows. We try several common property names.
-        const status =
-          getSelect(props["Application Status"]) ||
-          getStatus(props["Application Status"]) ||
-          getSelect(props["Status"]) ||
-          getStatus(props["Status"]);
-        const active =
-          props["Active"]?.type === "checkbox" ? getCheckbox(props["Active"]) : true;
-
-        const isSigned = active && status && SIGNED_STATUSES.has(status);
-        if (!isSigned) continue;
+        // "Signed" = Active checkbox is true (Application Status is mostly empty in Notion)
+        const active = getCheckbox(props["Active"]);
+        if (!active) continue;
         stats.contacts_signed++;
 
-        // Match
+        // Clean the name for matching: strip "(...)" and " - parent" segments
+        const cleanName = fullNameRaw
+          .replace(/\([^)]*\)/g, "")
+          .replace(/\s*-\s*.*$/, "")
+          .trim();
+
+        // Match by Notion ID first, then by cleaned name
         let studentId = byNotionId.get(page.id);
         if (!studentId) {
-          const { first, last } = splitName(fullName);
+          const { first, last } = splitName(cleanName);
           const key = `${first.toLowerCase()} ${last.toLowerCase()}`.trim();
           studentId = byName.get(key);
         }
@@ -201,29 +194,32 @@ serve(async (req) => {
         stats.contacts_matched++;
         notionToStudent.set(page.id, studentId);
 
-        // Build update payload — Notion-wins fields only
-        const { first, last } = splitName(fullName);
+        const { first, last } = splitName(cleanName);
+        const yearOfEntry = getNumber(props["Year of Entry"]);
+        const applicationCycle = yearOfEntry ? String(yearOfEntry) : null;
+        const appStatus = getSelect(props["Application Status"]);
+
         const update: Record<string, any> = {
           notion_page_id: page.id,
           first_name: first,
           last_name: last,
-          email: getEmail(props["Email"]) || getRich(props["Email"]) || null,
-          phone: getPhone(props["Number"]) || getPhone(props["Phone"]) || null,
-          current_school: getRich(props["Current School"]) || getSelect(props["Current School"]) || null,
-          curriculum: getSelect(props["Curriculum"]) || getRich(props["Curriculum"]) || null,
-          grade_level: getNumber(props["Grade"]) || getNumber(props["Grade Level"]),
-          consultation_programme: getSelect(props["Consultation Programme"]) || getRich(props["Consultation Programme"]) || null,
-          lead_source: getSelect(props["Lead Source"]) || getRich(props["Lead Source"]) || null,
-          status: status,
-          google_drive_folder_url: getUrl(props["Google Drive"]) || getUrl(props["Drive Folder"]) || null,
+          email: getEmail(props["Email"]),
+          phone: getPhone(props["Number"]),
+          current_school: getRich(props["School"]),
+          curriculum: getSelect(props["Curriculum"]),
+          consultation_programme: getSelect(props["Program"]),
+          lead_source: getSelect(props["Referrer"]),
+          status: appStatus,
+          google_drive_folder_url: getUrl(props["Google Drive Link"]),
+          application_cycle: applicationCycle,
+          quotation: getNumber(props["Quotation"])?.toString() ?? null,
         };
 
-        // Strip null/empty so we don't overwrite Lovable values with blanks
+        // Strip null/empty so we never overwrite Lovable values with blanks
         for (const k of Object.keys(update)) {
           const v = update[k];
           if (v === null || v === undefined || v === "") delete update[k];
         }
-        // Always re-store notion_page_id even if other fields were stripped
         update.notion_page_id = page.id;
 
         const { error: upErr } = await supabase
@@ -232,7 +228,7 @@ serve(async (req) => {
           .eq("id", studentId);
 
         if (upErr) {
-          stats.errors.push(`contact ${fullName}: ${upErr.message}`);
+          stats.errors.push(`contact ${cleanName}: ${upErr.message}`);
         } else {
           stats.contacts_updated++;
         }
