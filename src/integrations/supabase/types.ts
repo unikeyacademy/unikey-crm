@@ -668,6 +668,89 @@ export type Database = {
         }
         Relationships: []
       }
+      notion_session_reports: {
+        Row: {
+          consultant_name: string | null
+          created_at: string
+          id: string
+          notion_last_edited_at: string | null
+          notion_page_id: string
+          notion_url: string | null
+          raw_properties: Json | null
+          session_date: string | null
+          session_type: string | null
+          student_id: string | null
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          consultant_name?: string | null
+          created_at?: string
+          id?: string
+          notion_last_edited_at?: string | null
+          notion_page_id: string
+          notion_url?: string | null
+          raw_properties?: Json | null
+          session_date?: string | null
+          session_type?: string | null
+          student_id?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consultant_name?: string | null
+          created_at?: string
+          id?: string
+          notion_last_edited_at?: string | null
+          notion_page_id?: string
+          notion_url?: string | null
+          raw_properties?: Json | null
+          session_date?: string | null
+          session_type?: string | null
+          student_id?: string | null
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notion_session_reports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notion_sync_state: {
+        Row: {
+          id: string
+          last_cursor: string | null
+          last_error: string | null
+          last_status: string | null
+          last_synced_at: string | null
+          stats: Json | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          last_cursor?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          last_synced_at?: string | null
+          stats?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          last_cursor?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          last_synced_at?: string | null
+          stats?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parent_communications: {
         Row: {
           communication_date: string
